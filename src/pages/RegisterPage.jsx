@@ -25,18 +25,22 @@ export function RegisterPage() {
 
     setSubmitting(true)
     try {
-      const response = await authApi.register(email, password, passwordConfirmation)
+      const response = await authApi.register({
+        email,
+        password,
+        passwordConfirmation,
+      })
       login(response)
       navigate('/')
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        setError(err.message)
-        if (Object.keys(err.details).length > 0) {
-          const normalized = {}
-          for (const [field, value] of Object.entries(err.details)) {
-            normalized[field] = Array.isArray(value) ? value.join(' ') : value
-          }
-          setFieldErrors(normalized)
+        const normalized = {}
+        for (const [field, value] of Object.entries(err.details)) {
+          normalized[field] = Array.isArray(value) ? value.join(' ') : value
+        }
+        setFieldErrors(normalized)
+        if (Object.keys(normalized).length === 0) {
+          setError(err.message)
         }
       } else {
         setError('Network error. Please try again.')

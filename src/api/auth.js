@@ -49,8 +49,7 @@ async function request(path, { method = 'POST', body } = {}) {
 }
 
 export const authApi = {
-  register: (email, password, passwordConfirmation) =>
-    request('/auth/register', { email, password, passwordConfirmation }),
+  register: (payload) => request('/auth/register', { body: payload }),
 
-  login: (email, password) => request('/auth/login', { email, password }),
+  login: (payload) => request('/auth/login', { body: payload }),
 }

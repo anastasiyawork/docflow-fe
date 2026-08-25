@@ -19,18 +19,18 @@ export function LoginPage() {
     setFieldErrors({})
     setSubmitting(true)
     try {
-      const response = await authApi.login(email, password)
+      const response = await authApi.login({ email, password })
       login(response)
       navigate(location.state?.from ?? '/', { replace: true })
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        setError(err.message)
-        if (Object.keys(err.details).length > 0) {
-          const normalized = {}
-          for (const [field, value] of Object.entries(err.details)) {
-            normalized[field] = Array.isArray(value) ? value.join(' ') : value
-          }
-          setFieldErrors(normalized)
+        const normalized = {}
+        for (const [field, value] of Object.entries(err.details)) {
+          normalized[field] = Array.isArray(value) ? value.join(' ') : value
+        }
+        setFieldErrors(normalized)
+        if (Object.keys(normalized).length === 0) {
+          setError(err.message)
         }
       } else {
         setError('Network error. Please try again.')
