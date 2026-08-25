@@ -1,3 +1,5 @@
+import { TOKEN_KEY } from '../constants'
+
 export class ApiRequestError extends Error {
   constructor(message, status, details) {
     super(message)
@@ -7,7 +9,6 @@ export class ApiRequestError extends Error {
 }
 
 const BASE_URL = '/api'
-const TOKEN_KEY = 'docflow_token'
 
 const onUnauthorizedListeners = new Set()
 

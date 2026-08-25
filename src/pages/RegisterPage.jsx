@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { authApi, ApiRequestError } from '../api/auth'
+import { NETWORK_ERROR_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
 
 export function RegisterPage() {
@@ -43,7 +44,7 @@ export function RegisterPage() {
           setError(err.message)
         }
       } else {
-        setError('Network error. Please try again.')
+        setError(NETWORK_ERROR_MESSAGE)
       }
     } finally {
       setSubmitting(false)

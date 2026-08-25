@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { onUnauthorized } from '../api/auth'
-
-const TOKEN_KEY = 'docflow_token'
+import { TOKEN_KEY } from '../constants'
 
 const AuthContext = createContext(null)
 
