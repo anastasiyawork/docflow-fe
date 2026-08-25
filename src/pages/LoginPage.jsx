@@ -43,7 +43,7 @@ export function LoginPage() {
 
   return (
     <div className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit} noValidate>
+      <form className="auth-card" onSubmit={handleSubmit}>
         <h1>Sign in</h1>
         <p className="auth-subtitle">Welcome back to DocFlow</p>
 

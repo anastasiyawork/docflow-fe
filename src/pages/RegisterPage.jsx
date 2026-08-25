@@ -53,7 +53,7 @@ export function RegisterPage() {
 
   return (
     <div className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit} noValidate>
+      <form className="auth-card" onSubmit={handleSubmit}>
         <h1>Create account</h1>
         <p className="auth-subtitle">Start working with your documents</p>
 
