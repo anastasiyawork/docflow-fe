@@ -36,15 +36,13 @@ export function AuthProvider({ children }) {
   }, [session])
 
   const login = useCallback((response) => {
-    localStorage.setItem(TOKEN_KEY, response.token)
     const expiresAt = getTokenExpiresAt(response.token)
-    if (expiresAt === null && response.expiresAt) {
-      console.warn('JWT has no exp claim; falling back to response.expiresAt')
+    if (expiresAt === null) {
+      console.error('JWT has no exp claim')
+      return
     }
-    setSession({
-      token: response.token,
-      expiresAt: expiresAt ?? new Date(response.expiresAt).getTime(),
-    })
+    localStorage.setItem(TOKEN_KEY, response.token)
+    setSession({ token: response.token, expiresAt })
   }, [])
 
   const logout = useCallback(() => {
