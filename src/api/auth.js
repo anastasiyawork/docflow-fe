@@ -1,3 +1,4 @@
+import createClient from 'openapi-fetch'
 import { TOKEN_KEY } from '../constants'
 
 export class ApiRequestError extends Error {
@@ -8,49 +9,52 @@ export class ApiRequestError extends Error {
   }
 }
 
-const BASE_URL = '/api'
-
 const onUnauthorizedListeners = new Set()
 
 export function onUnauthorized(listener) {
   onUnauthorizedListeners.add(listener)
-  return () => onUnauthorizedListeners.delete(listener)
+  return () => {
+    onUnauthorizedListeners.delete(listener)
+  }
 }
 
-async function request(path, { method = 'POST', body } = {}) {
-  const headers = {}
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+/**
+ * @typedef {import('./schema').paths} ApiPaths
+ */
+/** @type {import('openapi-fetch').Client<ApiPaths>} */
+const client = createClient({ baseUrl: '' })
 
-  const token = localStorage.getItem(TOKEN_KEY)
-  if (token) headers['Authorization'] = `Bearer ${token}`
-
-  const response = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
-
-  if (!response.ok) {
-    if (response.status === 401 && token) {
+client.use({
+  async onRequest({ request }) {
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (token) request.headers.set('Authorization', `Bearer ${token}`)
+    return request
+  },
+  async onResponse({ response }) {
+    if (response.status === 401 && localStorage.getItem(TOKEN_KEY)) {
       onUnauthorizedListeners.forEach((listener) => listener())
     }
-    let message = 'Something went wrong. Please try again.'
-    const details = {}
-    try {
-      const error = await response.json()
-      message = error.message ?? message
-      Object.assign(details, error.details)
-    } catch {
-    }
-    throw new ApiRequestError(message, response.status, details)
+    return response
+  },
+})
+
+async function unwrap(promise) {
+  const { data, error, response } = await promise
+
+  if (error) {
+    const apiError = /** @type {any} */ (error)
+    throw new ApiRequestError(
+      apiError?.message ?? 'Something went wrong. Please try again.',
+      response.status,
+      apiError?.details ?? {},
+    )
   }
 
-  const text = await response.text()
-  return text ? JSON.parse(text) : null
+  return data
 }
 
 export const authApi = {
-  register: (payload) => request('/auth/register', { body: payload }),
+  register: (payload) => unwrap(client.POST('/api/auth/register', { body: payload })),
 
-  login: (payload) => request('/auth/login', { body: payload }),
+  login: (payload) => unwrap(client.POST('/api/auth/login', { body: payload })),
 }

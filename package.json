@@ -7,9 +7,11 @@
     "dev": "vite --port 3000",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:api": "openapi-typescript http://localhost:8080/v3/api-docs -o src/api/schema.d.ts"
   },
   "dependencies": {
+    "openapi-fetch": "^0.17.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"
@@ -20,6 +22,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.7.0",
+    "openapi-typescript": "^7.13.0",
     "vite": "^8.2.0"
   }
 }
