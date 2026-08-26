@@ -14,6 +14,15 @@ export function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState(/** @type {Record<string, string>} */ ({}))
   const [submitting, setSubmitting] = useState(false)
 
+  function clearFieldError(field) {
+    setFieldErrors((prev) => {
+      if (!(field in prev)) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setError(null)
@@ -54,24 +63,34 @@ export function LoginPage() {
           id="email"
           type="email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => {
+            setEmail(event.target.value)
+            clearFieldError('email')
+          }}
           placeholder="you@example.com"
           autoComplete="email"
           required
         />
-        {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
+        {fieldErrors.email && (
+          <span className="field-error">{fieldErrors.email}</span>
+        )}
 
         <label htmlFor="password">Password</label>
         <input
           id="password"
           type="password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) => {
+            setPassword(event.target.value)
+            clearFieldError('password')
+          }}
           placeholder="••••••••"
           autoComplete="current-password"
           required
         />
-        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
+        {fieldErrors.password && (
+          <span className="field-error">{fieldErrors.password}</span>
+        )}
 
         <button type="submit" disabled={submitting}>
           {submitting ? 'Signing in…' : 'Sign in'}

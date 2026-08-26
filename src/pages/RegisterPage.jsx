@@ -15,6 +15,15 @@ export function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState(/** @type {Record<string, string>} */ ({}))
   const [submitting, setSubmitting] = useState(false)
 
+  function clearFieldError(field) {
+    setFieldErrors((prev) => {
+      if (!(field in prev)) return prev
+      const next = { ...prev }
+      delete next[field]
+      return next
+    })
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setError(null)
@@ -65,32 +74,45 @@ export function RegisterPage() {
           id="email"
           type="email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => {
+            setEmail(event.target.value)
+            clearFieldError('email')
+          }}
           placeholder="you@example.com"
           autoComplete="email"
           required
         />
-        {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
+        {fieldErrors.email && (
+          <span className="field-error">{fieldErrors.email}</span>
+        )}
 
         <label htmlFor="password">Password</label>
         <input
           id="password"
           type="password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) => {
+            setPassword(event.target.value)
+            clearFieldError('password')
+          }}
           placeholder="At least 8 characters"
           autoComplete="new-password"
           minLength={8}
           required
         />
-        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
+        {fieldErrors.password && (
+          <span className="field-error">{fieldErrors.password}</span>
+        )}
 
         <label htmlFor="passwordConfirmation">Confirm password</label>
         <input
           id="passwordConfirmation"
           type="password"
           value={passwordConfirmation}
-          onChange={(event) => setPasswordConfirmation(event.target.value)}
+          onChange={(event) => {
+            setPasswordConfirmation(event.target.value)
+            clearFieldError('passwordConfirmation')
+          }}
           placeholder="Repeat password"
           autoComplete="new-password"
           required
