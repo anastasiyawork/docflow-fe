@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { authApi, ApiRequestError, normalizeFieldErrors } from '../api/auth'
 import { NETWORK_ERROR_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext'
 export function RegisterPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
@@ -32,7 +33,7 @@ export function RegisterPage() {
         passwordConfirmation,
       })
       login(response)
-      navigate('/')
+      navigate(location.state?.from ?? '/', { replace: true })
     } catch (err) {
       if (err instanceof ApiRequestError) {
         const normalized = normalizeFieldErrors(err.details)

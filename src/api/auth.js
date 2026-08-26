@@ -46,8 +46,16 @@ client.use({
   },
 })
 
+const REQUEST_TIMEOUT_MS = 10_000
+
+function withTimeout(promise) {
+  const controller = new AbortController()
+  const timerId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  return promise({ signal: controller.signal }).finally(() => clearTimeout(timerId))
+}
+
 async function unwrap(promise) {
-  const { data, error, response } = await promise
+  const { data, error, response } = await withTimeout(promise)
 
   if (error) {
     const apiError = /** @type {any} */ (error)
@@ -62,7 +70,7 @@ async function unwrap(promise) {
 }
 
 export const authApi = {
-  register: (payload) => unwrap(client.POST('/api/auth/register', { body: payload })),
+  register: (payload) => unwrap((init) => client.POST('/api/auth/register', { ...init, body: payload })),
 
-  login: (payload) => unwrap(client.POST('/api/auth/login', { body: payload })),
+  login: (payload) => unwrap((init) => client.POST('/api/auth/login', { ...init, body: payload })),
 }
