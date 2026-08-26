@@ -11,7 +11,7 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
-  const [fieldErrors, setFieldErrors] = useState({})
+  const [fieldErrors, setFieldErrors] = useState(/** @type {Record<string, string>} */ ({}))
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(event) {
@@ -25,7 +25,7 @@ export function LoginPage() {
       navigate(location.state?.from ?? '/', { replace: true })
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        const normalized = {}
+        const normalized = /** @type {Record<string, string>} */ ({})
         for (const [field, value] of Object.entries(err.details)) {
           normalized[field] = Array.isArray(value) ? value.join(' ') : value
         }
