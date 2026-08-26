@@ -9,6 +9,14 @@ export class ApiRequestError extends Error {
   }
 }
 
+export function normalizeFieldErrors(details) {
+  const normalized = /** @type {Record<string, string>} */ ({})
+  for (const [field, value] of Object.entries(details ?? {})) {
+    normalized[field] = /** @type {string} */ (Array.isArray(value) ? value.join(' ') : value)
+  }
+  return normalized
+}
+
 const onUnauthorizedListeners = new Set()
 
 export function onUnauthorized(listener) {

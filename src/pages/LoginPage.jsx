@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { authApi, ApiRequestError } from '../api/auth'
+import { authApi, ApiRequestError, normalizeFieldErrors } from '../api/auth'
 import { NETWORK_ERROR_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
 
@@ -25,10 +25,7 @@ export function LoginPage() {
       navigate(location.state?.from ?? '/', { replace: true })
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        const normalized = /** @type {Record<string, string>} */ ({})
-        for (const [field, value] of Object.entries(err.details)) {
-          normalized[field] = Array.isArray(value) ? value.join(' ') : value
-        }
+        const normalized = normalizeFieldErrors(err.details)
         setFieldErrors(normalized)
         if (Object.keys(normalized).length === 0) {
           setError(err.message)

@@ -52,6 +52,15 @@ export function AuthProvider({ children }) {
 
   useEffect(() => onUnauthorized(logout), [logout])
 
+  useEffect(() => {
+    const handleStorage = (event) => {
+      if (event.key !== null && event.key !== TOKEN_KEY) return
+      setSession(readStoredSession())
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
+
   const value = useMemo(
     () => ({
       token: session?.token ?? null,
