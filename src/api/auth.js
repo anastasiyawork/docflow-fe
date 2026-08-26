@@ -1,5 +1,6 @@
 import createClient from 'openapi-fetch'
 import { TOKEN_KEY } from '../constants'
+import { LOGIN_ENDPOINT, REGISTER_ENDPOINT } from '../constants/endpoints'
 
 export class ApiRequestError extends Error {
   constructor(message, status, details) {
@@ -38,8 +39,10 @@ client.use({
     if (token) request.headers.set('Authorization', `Bearer ${token}`)
     return request
   },
-  async onResponse({ response }) {
-    if (response.status === 401 && localStorage.getItem(TOKEN_KEY)) {
+  async onResponse({ request, response }) {
+    const pathname = new URL(request.url).pathname
+    const isAuthEndpoint = pathname === LOGIN_ENDPOINT || pathname === REGISTER_ENDPOINT
+    if (response.status === 401 && !isAuthEndpoint && localStorage.getItem(TOKEN_KEY)) {
       onUnauthorizedListeners.forEach((listener) => listener())
     }
     return response
@@ -55,7 +58,17 @@ function withTimeout(promise) {
 }
 
 async function unwrap(promise) {
-  const { data, error, response } = await withTimeout(promise)
+  let result
+  try {
+    result = await withTimeout(promise)
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiRequestError('Request timed out. Please try again.', 408)
+    }
+    throw err
+  }
+
+  const { data, error, response } = result
 
   if (error) {
     const apiError = /** @type {any} */ (error)
@@ -70,7 +83,7 @@ async function unwrap(promise) {
 }
 
 export const authApi = {
-  register: (payload) => unwrap((init) => client.POST('/api/auth/register', { ...init, body: payload })),
+  register: (payload) => unwrap((init) => client.POST(REGISTER_ENDPOINT, { ...init, body: payload })),
 
-  login: (payload) => unwrap((init) => client.POST('/api/auth/login', { ...init, body: payload })),
+  login: (payload) => unwrap((init) => client.POST(LOGIN_ENDPOINT, { ...init, body: payload })),
 }

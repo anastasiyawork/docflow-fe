@@ -41,10 +41,11 @@ export function AuthProvider({ children }) {
     const expiresAt = getTokenExpiresAt(response.token)
     if (expiresAt === null) {
       console.error('JWT has no exp claim')
-      return
+      return false
     }
     localStorage.setItem(TOKEN_KEY, response.token)
     setSession({ token: response.token, expiresAt })
+    return true
   }, [])
 
   const logout = useCallback(() => {

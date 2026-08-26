@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { authApi, ApiRequestError, normalizeFieldErrors } from '../api/auth'
-import { NETWORK_ERROR_MESSAGE } from '../constants'
+import { INVALID_SESSION_MESSAGE, NETWORK_ERROR_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
 
 export function RegisterPage() {
@@ -32,7 +32,10 @@ export function RegisterPage() {
         password,
         passwordConfirmation,
       })
-      login(response)
+      if (!login(response)) {
+        setError(INVALID_SESSION_MESSAGE)
+        return
+      }
       navigate(location.state?.from ?? '/', { replace: true })
     } catch (err) {
       if (err instanceof ApiRequestError) {
