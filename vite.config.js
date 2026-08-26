@@ -11,6 +11,10 @@ export default defineConfig({
         target: process.env.API_PROXY_TARGET || 'http://localhost:8080',
         changeOrigin: true,
       },
+      '/oauth2': {
+        target: process.env.API_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+      },
     },
   },
 })

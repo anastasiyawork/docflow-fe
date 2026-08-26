@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { authApi, ApiRequestError, normalizeFieldErrors } from '../api/auth'
 import { INVALID_SESSION_MESSAGE, NETWORK_ERROR_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
+import { GITHUB_OAUTH_ENDPOINT } from '../constants/endpoints'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -95,6 +96,10 @@ export function LoginPage() {
         <button type="submit" disabled={submitting}>
           {submitting ? 'Signing in…' : 'Sign in'}
         </button>
+
+        <a className="github-button" href={GITHUB_OAUTH_ENDPOINT}>
+          Sign in with GitHub
+        </a>
 
         <p className="auth-switch">
           No account? <Link to="/register">Create one</Link>

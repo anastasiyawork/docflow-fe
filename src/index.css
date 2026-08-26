@@ -85,6 +85,22 @@ body {
   cursor: not-allowed;
 }
 
+.github-button {
+  background: #24292f;
+  color: #fff;
+  border-radius: 8px;
+  padding: 11px;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  margin-top: 10px;
+}
+
+.github-button:hover {
+  background: #57606a;
+}
+
 .auth-error {
   background: var(--error-bg);
   color: var(--error-text);
