@@ -6,7 +6,9 @@ const AuthContext = createContext(null)
 
 function getTokenExpiresAt(token) {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
+    const payload = JSON.parse(atob(padded))
     if (typeof payload.exp !== 'number') return null
     return payload.exp * 1000
   } catch {
