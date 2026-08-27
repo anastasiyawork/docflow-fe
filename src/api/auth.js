@@ -1,6 +1,6 @@
 import createClient from 'openapi-fetch'
 import { TOKEN_KEY } from '../constants'
-import { LOGIN_ENDPOINT, REGISTER_ENDPOINT } from '../constants/endpoints'
+import { GITHUB_EXCHANGE_ENDPOINT, LOGIN_ENDPOINT, REGISTER_ENDPOINT } from '../constants/endpoints'
 
 export class ApiRequestError extends Error {
   constructor(message, status, details) {
@@ -10,10 +10,12 @@ export class ApiRequestError extends Error {
   }
 }
 
+/** @param {unknown} details @returns {Record<string, string>} */
 export function normalizeFieldErrors(details) {
-  const normalized = /** @type {Record<string, string>} */ ({})
+  /** @type {Record<string, string>} */
+  const normalized = {}
   for (const [field, value] of Object.entries(details ?? {})) {
-    normalized[field] = /** @type {string} */ (Array.isArray(value) ? value.join(' ') : value)
+    normalized[field] = Array.isArray(value) ? value.join(' ') : String(value)
   }
   return normalized
 }
@@ -27,10 +29,7 @@ export function onUnauthorized(listener) {
   }
 }
 
-/**
- * @typedef {import('./schema').paths} ApiPaths
- */
-/** @type {import('openapi-fetch').Client<ApiPaths>} */
+/** @type {import('openapi-fetch').Client<import('./schema').paths>} */
 const client = createClient({ baseUrl: '' })
 
 client.use({
@@ -41,7 +40,7 @@ client.use({
   },
   async onResponse({ request, response }) {
     const pathname = new URL(request.url).pathname
-    const isAuthEndpoint = pathname === LOGIN_ENDPOINT || pathname === REGISTER_ENDPOINT
+    const isAuthEndpoint = pathname === LOGIN_ENDPOINT || pathname === REGISTER_ENDPOINT || pathname === GITHUB_EXCHANGE_ENDPOINT
     if (response.status === 401 && !isAuthEndpoint && localStorage.getItem(TOKEN_KEY)) {
       onUnauthorizedListeners.forEach((listener) => listener())
     }
@@ -71,7 +70,7 @@ async function unwrap(promise) {
   const { data, error, response } = result
 
   if (error) {
-    const apiError = /** @type {any} */ (error)
+    const apiError = error
     throw new ApiRequestError(
       apiError?.message ?? 'Something went wrong. Please try again.',
       response.status,
@@ -86,4 +85,6 @@ export const authApi = {
   register: (payload) => unwrap((init) => client.POST(REGISTER_ENDPOINT, { ...init, body: payload })),
 
   login: (payload) => unwrap((init) => client.POST(LOGIN_ENDPOINT, { ...init, body: payload })),
+
+  exchangeGithubCode: (code) => unwrap((init) => client.POST(GITHUB_EXCHANGE_ENDPOINT, { ...init, body: { code } })),
 }

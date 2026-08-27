@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { LOGIN_PATH } from '../constants/endpoints'
 
 export function HomePage() {
   const { logout } = useAuth()
@@ -7,7 +8,7 @@ export function HomePage() {
 
   function handleLogout() {
     logout()
-    navigate('/login', { replace: true })
+    navigate(LOGIN_PATH, { replace: true })
   }
 
   return (

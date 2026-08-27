@@ -1,19 +1,30 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { authApi, ApiRequestError, normalizeFieldErrors } from '../api/auth'
-import { INVALID_SESSION_MESSAGE, NETWORK_ERROR_MESSAGE } from '../constants'
+import { GITHUB_AUTH_FAILED_CODE, GITHUB_AUTH_FAILED_MESSAGE, INVALID_SESSION_MESSAGE, NETWORK_ERROR_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
-import { GITHUB_OAUTH_ENDPOINT } from '../constants/endpoints'
+import { GITHUB_OAUTH_ENDPOINT, LOGIN_PATH } from '../constants/endpoints'
 
 export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const queryError = new URLSearchParams(location.search).get('error')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
+  const [error, setError] = useState(
+    location.state?.error ?? (queryError === GITHUB_AUTH_FAILED_CODE ? GITHUB_AUTH_FAILED_MESSAGE : null),
+  )
   const [fieldErrors, setFieldErrors] = useState(/** @type {Record<string, string>} */ ({}))
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!queryError) return
+    navigate(LOGIN_PATH, {
+      replace: true,
+      state: { ...location.state, error: queryError === GITHUB_AUTH_FAILED_CODE ? GITHUB_AUTH_FAILED_MESSAGE : INVALID_SESSION_MESSAGE },
+    })
+  }, [location.search, location.state, navigate, queryError])
 
   function clearFieldError(field) {
     setFieldErrors((prev) => {

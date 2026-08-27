@@ -7,7 +7,7 @@ import { RegisterPage } from './pages/RegisterPage'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { GithubAuthSuccessPage } from './pages/GithubAuthSuccessPage'
-import { GITHUB_AUTH_SUCCESS_PATH } from './constants/endpoints'
+import { GITHUB_AUTH_SUCCESS_PATH, LOGIN_PATH } from './constants/endpoints'
 
 export default function App() {
   return (
@@ -16,7 +16,7 @@ export default function App() {
         <Routes>
           <Route path={GITHUB_AUTH_SUCCESS_PATH} element={<GithubAuthSuccessPage />} />
           <Route element={<RedirectIfAuthenticated />}>
-            <Route path="/login" element={<LoginPage />} />
+            <Route path={LOGIN_PATH} element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
           </Route>
           <Route element={<RequireAuth />}>

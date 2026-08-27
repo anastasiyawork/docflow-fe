@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { authApi, ApiRequestError, normalizeFieldErrors } from '../api/auth'
 import { INVALID_SESSION_MESSAGE, NETWORK_ERROR_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
+import { LOGIN_PATH } from '../constants/endpoints'
 
 export function RegisterPage() {
   const { login } = useAuth()
@@ -126,7 +127,7 @@ export function RegisterPage() {
         </button>
 
         <p className="auth-switch">
-          Already have an account? <Link to="/login">Sign in</Link>
+          Already have an account? <Link to={LOGIN_PATH}>Sign in</Link>
         </p>
       </form>
     </div>
