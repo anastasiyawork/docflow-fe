@@ -1,0 +1,6 @@
+export const LOGIN_ENDPOINT = '/api/auth/login'
+export const REGISTER_ENDPOINT = '/api/auth/register'
+export const GITHUB_EXCHANGE_ENDPOINT = '/api/auth/github/exchange'
+export const GITHUB_OAUTH_ENDPOINT = '/oauth2/authorization/github'
+export const LOGIN_PATH = '/login'
+export const GITHUB_AUTH_SUCCESS_PATH = '/auth/github/success'
