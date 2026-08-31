@@ -1,5 +1,5 @@
 import createClient from 'openapi-fetch'
-import { TOKEN_KEY } from '../constants'
+import { GENERIC_ERROR_MESSAGE, NETWORK_ERROR_MESSAGE, TOKEN_KEY } from '../constants'
 import { GITHUB_EXCHANGE_ENDPOINT, LOGIN_ENDPOINT, REGISTER_ENDPOINT } from '../constants/endpoints'
 
 export class ApiRequestError extends Error {
@@ -11,11 +11,34 @@ export class ApiRequestError extends Error {
 }
 
 export function normalizeFieldErrors(details) {
+  /** @type {Record<string, string>} */
   const normalized = {}
   for (const [field, value] of Object.entries(details ?? {})) {
     normalized[field] = Array.isArray(value) ? value.join(' ') : String(value)
   }
   return normalized
+}
+
+export function handleAuthError(err) {
+  if (err instanceof ApiRequestError) {
+    const fieldErrors = normalizeFieldErrors(err.details)
+    return {
+      fieldErrors,
+      error: Object.keys(fieldErrors).length === 0 ? err.message : null,
+    }
+  }
+
+  if (err instanceof TypeError) {
+    return {
+      fieldErrors: {},
+      error: NETWORK_ERROR_MESSAGE,
+    }
+  }
+
+  return {
+    fieldErrors: {},
+    error: GENERIC_ERROR_MESSAGE,
+  }
 }
 
 const onUnauthorizedListeners = new Set()
@@ -88,7 +111,7 @@ async function unwrap(promise) {
       if (error) {
         const apiError = error
         throw new ApiRequestError(
-          apiError?.message ?? 'Something went wrong. Please try again.',
+          apiError?.message ?? GENERIC_ERROR_MESSAGE,
           response.status,
           apiError?.details ?? {},
         )

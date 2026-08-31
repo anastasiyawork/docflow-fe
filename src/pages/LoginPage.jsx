@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { authApi, ApiRequestError, normalizeFieldErrors } from '../api/auth'
-import { GITHUB_AUTH_FAILED_CODE, GITHUB_AUTH_FAILED_MESSAGE, INVALID_SESSION_MESSAGE, NETWORK_ERROR_MESSAGE } from '../constants'
+import { authApi, handleAuthError } from '../api/auth'
+import { GITHUB_AUTH_FAILED_CODE, GITHUB_AUTH_FAILED_MESSAGE, INVALID_SESSION_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
 import { GITHUB_OAUTH_ENDPOINT, LOGIN_PATH } from '../constants/endpoints'
 
@@ -48,15 +48,9 @@ export function LoginPage() {
       }
       navigate(location.state?.from ?? '/', { replace: true })
     } catch (err) {
-      if (err instanceof ApiRequestError) {
-        const normalized = normalizeFieldErrors(err.details)
-        setFieldErrors(normalized)
-        if (Object.keys(normalized).length === 0) {
-          setError(err.message)
-        }
-      } else {
-        setError(NETWORK_ERROR_MESSAGE)
-      }
+      const { error: authError, fieldErrors: authFieldErrors } = handleAuthError(err)
+      setFieldErrors(authFieldErrors)
+      setError(authError)
     } finally {
       setSubmitting(false)
     }
