@@ -29,6 +29,12 @@ function readStoredSession() {
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(readStoredSession)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    setSession(readStoredSession())
+    setIsLoading(false)
+  }, [])
 
   useEffect(() => {
     if (!session?.expiresAt) return undefined
@@ -68,10 +74,11 @@ export function AuthProvider({ children }) {
     () => ({
       token: session?.token ?? null,
       isAuthenticated: session !== null,
+      isLoading,
       login,
       logout,
     }),
-    [session, login, logout],
+    [session, login, logout, isLoading],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
