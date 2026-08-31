@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { authApi, handleAuthError } from '../api/auth'
 import { GITHUB_AUTH_FAILED_CODE, GITHUB_AUTH_FAILED_MESSAGE, INVALID_SESSION_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
-import { GITHUB_OAUTH_ENDPOINT, LOGIN_PATH } from '../constants/endpoints'
+import { GITHUB_OAUTH_ENDPOINT, LOGIN_PATH, REGISTER_PATH } from '../constants/endpoints'
+import { AuthForm } from '../auth/AuthForm'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -57,59 +58,25 @@ export function LoginPage() {
   }
 
   return (
-    <div className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h1>Sign in</h1>
-        <p className="auth-subtitle">Welcome back to DocFlow</p>
-
-        {error && <div className="auth-error" role="alert">{error}</div>}
-
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(event) => {
-            setEmail(event.target.value)
-            clearFieldError('email')
-          }}
-          placeholder="you@example.com"
-          autoComplete="email"
-          required
-        />
-        {fieldErrors.email && (
-          <span className="field-error">{fieldErrors.email}</span>
-        )}
-
-        <label htmlFor="password">Password</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value)
-            clearFieldError('password')
-          }}
-          placeholder="••••••••"
-          autoComplete="current-password"
-          required
-        />
-        {fieldErrors.password && (
-          <span className="field-error">{fieldErrors.password}</span>
-        )}
-
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in'}
-        </button>
-
-        <a className="github-button" href={GITHUB_OAUTH_ENDPOINT}>
-          Sign in with GitHub
-        </a>
-
-        <p className="auth-switch">
-          No account? <Link to="/register">Create one</Link>
-        </p>
-      </form>
-    </div>
+    <AuthForm
+      type="login"
+      email={email}
+      password={password}
+      passwordConfirmation=""
+      setEmail={setEmail}
+      setPassword={setPassword}
+      setPasswordConfirmation={() => {}}
+      error={error}
+      fieldErrors={fieldErrors}
+      submitting={submitting}
+      onSubmit={handleSubmit}
+      onClearFieldError={clearFieldError}
+      githubHref={GITHUB_OAUTH_ENDPOINT}
+      switchLink={{
+        text: 'No account?',
+        label: 'Create one',
+        to: REGISTER_PATH,
+      }}
+    />
   )
 }
