@@ -10,9 +10,7 @@ export class ApiRequestError extends Error {
   }
 }
 
-/** @param {unknown} details @returns {Record<string, string>} */
 export function normalizeFieldErrors(details) {
-  /** @type {Record<string, string>} */
   const normalized = {}
   for (const [field, value] of Object.entries(details ?? {})) {
     normalized[field] = Array.isArray(value) ? value.join(' ') : String(value)
@@ -49,6 +47,7 @@ client.use({
 })
 
 const REQUEST_TIMEOUT_MS = 10_000
+const MAX_RETRIES = 2
 
 function withTimeout(promise) {
   const controller = new AbortController()
@@ -56,29 +55,54 @@ function withTimeout(promise) {
   return promise({ signal: controller.signal }).finally(() => clearTimeout(timerId))
 }
 
+function isRetryableError(err) {
+  if (!err) return false
+  if (err instanceof ApiRequestError && err.status === 408) return true
+  if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') return true
+  if (err instanceof TypeError) return true
+  if (typeof err?.name === 'string' && (err.name === 'AbortError' || err.name === 'TypeError')) return true
+  if (typeof err?.message === 'string') {
+    const message = err.message.toLowerCase()
+    return message.includes('failed to fetch') || message.includes('networkerror') || message.includes('load failed')
+  }
+  return false
+}
+
 async function unwrap(promise) {
-  let result
-  try {
-    result = await withTimeout(promise)
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new ApiRequestError('Request timed out. Please try again.', 408)
+  let lastError
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    try {
+      let result
+      try {
+        result = await withTimeout(promise)
+      } catch (err) {
+        if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
+          throw new ApiRequestError('Request timed out. Please try again.', 408)
+        }
+        throw err
+      }
+
+      const { data, error, response } = result
+
+      if (error) {
+        const apiError = error
+        throw new ApiRequestError(
+          apiError?.message ?? 'Something went wrong. Please try again.',
+          response.status,
+          apiError?.details ?? {},
+        )
+      }
+
+      return data
+    } catch (err) {
+      lastError = err
+      const shouldRetry = attempt < MAX_RETRIES && isRetryableError(err)
+      if (!shouldRetry) throw err
     }
-    throw err
   }
 
-  const { data, error, response } = result
-
-  if (error) {
-    const apiError = error
-    throw new ApiRequestError(
-      apiError?.message ?? 'Something went wrong. Please try again.',
-      response.status,
-      apiError?.details ?? {},
-    )
-  }
-
-  return data
+  throw lastError
 }
 
 export const authApi = {
