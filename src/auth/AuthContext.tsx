@@ -1,14 +1,27 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode, FC } from 'react'
 import { onUnauthorized } from '../api/auth'
 import { TOKEN_KEY } from '../constants'
 
-const AuthContext = createContext(null)
+interface Session {
+  token: string
+  expiresAt: number
+}
 
-function getTokenExpiresAt(token) {
+interface AuthContextType {
+  token: string | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  login: (response: { token: string }) => boolean
+  logout: () => void
+}
+
+const AuthContext = createContext<AuthContextType | null>(null)
+
+function getTokenExpiresAt(token: string): number | null {
   try {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
     const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=')
-    const payload = JSON.parse(atob(padded))
+    const payload = JSON.parse(atob(padded)) as { exp?: unknown }
     if (typeof payload.exp !== 'number') return null
     return payload.exp * 1000
   } catch {
@@ -16,7 +29,7 @@ function getTokenExpiresAt(token) {
   }
 }
 
-function readStoredSession() {
+function readStoredSession(): Session | null {
   const token = localStorage.getItem(TOKEN_KEY)
   if (!token) return null
   const expiresAt = getTokenExpiresAt(token)
@@ -27,8 +40,12 @@ function readStoredSession() {
   return { token, expiresAt }
 }
 
-export function AuthProvider({ children }) {
-  const [session, setSession] = useState(readStoredSession)
+interface AuthProviderProps {
+  children: ReactNode
+}
+
+export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
+  const [session, setSession] = useState<Session | null>(readStoredSession)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -43,7 +60,7 @@ export function AuthProvider({ children }) {
     return () => clearTimeout(timerId)
   }, [session])
 
-  const login = useCallback((response) => {
+  const login = useCallback((response: { token: string }): boolean => {
     const expiresAt = getTokenExpiresAt(response.token)
     if (expiresAt === null) {
       console.error('JWT has no exp claim')
@@ -54,7 +71,7 @@ export function AuthProvider({ children }) {
     return true
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback((): void => {
     localStorage.removeItem(TOKEN_KEY)
     setSession(null)
   }, [])
@@ -62,7 +79,7 @@ export function AuthProvider({ children }) {
   useEffect(() => onUnauthorized(logout), [logout])
 
   useEffect(() => {
-    const handleStorage = (event) => {
+    const handleStorage = (event: StorageEvent): void => {
       if (event.key !== null && event.key !== TOKEN_KEY) return
       setSession(readStoredSession())
     }
@@ -70,7 +87,7 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('storage', handleStorage)
   }, [])
 
-  const value = useMemo(
+  const value: AuthContextType = useMemo(
     () => ({
       token: session?.token ?? null,
       isAuthenticated: session !== null,
@@ -84,7 +101,7 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext)
   if (!context) {
     throw new Error('useAuth must be used within AuthProvider')

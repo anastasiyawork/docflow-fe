@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { FC, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { INVALID_SESSION_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
@@ -6,7 +6,11 @@ import { authApi, handleAuthError } from '../api/auth'
 import { LOGIN_PATH } from '../constants/endpoints'
 import { t } from '../i18n'
 
-export function GithubAuthSuccessPage() {
+interface LocationState {
+  error?: string
+}
+
+export const GithubAuthSuccessPage: FC = () => {
   const { login } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -16,12 +20,13 @@ export function GithubAuthSuccessPage() {
     if (!code) {
       navigate(LOGIN_PATH, {
         replace: true,
-        state: { error: INVALID_SESSION_MESSAGE() },
+        state: { error: INVALID_SESSION_MESSAGE() } satisfies LocationState,
       })
       return
     }
 
-    authApi.exchangeGithubCode(code)
+    authApi
+      .exchangeGithubCode(code)
       .then((response) => {
         if (!login(response)) {
           throw new Error('Invalid token')
@@ -32,7 +37,7 @@ export function GithubAuthSuccessPage() {
         const { error: authError } = handleAuthError(error)
         navigate(LOGIN_PATH, {
           replace: true,
-          state: { error: authError ?? INVALID_SESSION_MESSAGE() },
+          state: { error: authError ?? INVALID_SESSION_MESSAGE() } satisfies LocationState,
         })
       })
   }, [login, navigate, searchParams])

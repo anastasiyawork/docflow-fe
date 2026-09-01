@@ -1,0 +1,56 @@
+{
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Welcome back to DocFlow",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "noAccount": "No account?",
+      "createOne": "Create one",
+      "signInWithGithub": "Sign in with GitHub"
+    },
+    "register": {
+      "title": "Create account",
+      "subtitle": "Start working with your documents",
+      "submit": "Create account",
+      "submitting": "Creating…",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "••••••••",
+      "passwordNew": "At least 8 characters",
+      "passwordConfirm": "Confirm password",
+      "passwordConfirmPlaceholder": "Repeat password"
+    }
+  },
+  "home": {
+    "title": "DocFlow",
+    "signOut": "Sign out",
+    "message": "You are signed in."
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Page not found",
+    "home": "Go home"
+  },
+  "github": {
+    "signingIn": "Signing you in with GitHub..."
+  },
+  "errors": {
+    "network": "Network error. Please try again.",
+    "generic": "Something went wrong. Please try again.",
+    "invalidSession": "Received an invalid session. Please try again.",
+    "githubAuthFailed": "GitHub authentication failed. Please try again.",
+    "requestTimeout": "Request timed out. Please try again.",
+    "noDataReceived": "No data received from server.",
+    "passwordsMismatch": "Passwords do not match"
+  },
+  "validation": {
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required"
+  }
+}

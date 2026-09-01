@@ -1,37 +1,28 @@
-import { useEffect, useState } from 'react'
+import { FC, FormEvent, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { authApi, handleAuthError } from '../api/auth'
-import { GITHUB_AUTH_FAILED_CODE, GITHUB_AUTH_FAILED_MESSAGE, INVALID_SESSION_MESSAGE } from '../constants'
+import { INVALID_SESSION_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
-import { GITHUB_OAUTH_ENDPOINT, LOGIN_PATH, REGISTER_PATH } from '../constants/endpoints'
+import { LOGIN_PATH } from '../constants/endpoints'
 import { AuthForm } from '../auth/AuthForm'
 import { t } from '../i18n'
 
-export function LoginPage() {
+interface LocationState {
+  from?: string
+}
+
+export const RegisterPage: FC = () => {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const queryError = new URLSearchParams(location.search).get('error')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState(
-    location.state?.error ?? (queryError === GITHUB_AUTH_FAILED_CODE ? GITHUB_AUTH_FAILED_MESSAGE() : null),
-  )
-  const [fieldErrors, setFieldErrors] = useState(/** @type {Record<string, string>} */ ({}))
+  const [passwordConfirmation, setPasswordConfirmation] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    if (!queryError) return
-    navigate(LOGIN_PATH, {
-      replace: true,
-      state: { 
-        ...location.state, 
-        error: queryError === GITHUB_AUTH_FAILED_CODE ? GITHUB_AUTH_FAILED_MESSAGE() : INVALID_SESSION_MESSAGE() 
-      },
-    })
-  }, [location.search, location.state, navigate, queryError])
-
-  function clearFieldError(field) {
+  function clearFieldError(field: string): void {
     setFieldErrors((prev) => {
       if (!(field in prev)) return prev
       const next = { ...prev }
@@ -40,18 +31,28 @@ export function LoginPage() {
     })
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
     setError(null)
     setFieldErrors({})
+
+    if (password !== passwordConfirmation) {
+      setFieldErrors({ passwordConfirmation: t('errors.passwordsMismatch') })
+      return
+    }
+
     setSubmitting(true)
     try {
-      const response = await authApi.login({ email, password })
+      const response = await authApi.register({
+        email,
+        password,
+        passwordConfirmation,
+      })
       if (!login(response)) {
         setError(INVALID_SESSION_MESSAGE())
         return
       }
-      navigate(location.state?.from ?? '/', { replace: true })
+      navigate((location.state as LocationState)?.from ?? '/', { replace: true })
     } catch (err) {
       const { error: authError, fieldErrors: authFieldErrors } = handleAuthError(err)
       setFieldErrors(authFieldErrors)
@@ -63,23 +64,22 @@ export function LoginPage() {
 
   return (
     <AuthForm
-      type="login"
+      type="register"
       email={email}
       password={password}
-      passwordConfirmation=""
+      passwordConfirmation={passwordConfirmation}
       setEmail={setEmail}
       setPassword={setPassword}
-      setPasswordConfirmation={() => {}}
+      setPasswordConfirmation={setPasswordConfirmation}
       error={error}
       fieldErrors={fieldErrors}
       submitting={submitting}
       onSubmit={handleSubmit}
       onClearFieldError={clearFieldError}
-      githubHref={GITHUB_OAUTH_ENDPOINT}
       switchLink={{
-        text: t('auth.login.noAccount'),
-        label: t('auth.login.createOne'),
-        to: REGISTER_PATH,
+        text: t('auth.register.haveAccount'),
+        label: t('auth.register.signIn'),
+        to: LOGIN_PATH,
       }}
     />
   )

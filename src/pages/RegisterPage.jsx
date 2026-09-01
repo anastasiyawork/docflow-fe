@@ -5,6 +5,7 @@ import { INVALID_SESSION_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
 import { LOGIN_PATH } from '../constants/endpoints'
 import { AuthForm } from '../auth/AuthForm'
+import { t } from '../i18n'
 
 export function RegisterPage() {
   const { login } = useAuth()
@@ -32,7 +33,7 @@ export function RegisterPage() {
     setFieldErrors({})
 
     if (password !== passwordConfirmation) {
-      setFieldErrors({ passwordConfirmation: 'Passwords do not match' })
+      setFieldErrors({ passwordConfirmation: t('errors.passwordsMismatch') })
       return
     }
 
@@ -44,7 +45,7 @@ export function RegisterPage() {
         passwordConfirmation,
       })
       if (!login(response)) {
-        setError(INVALID_SESSION_MESSAGE)
+        setError(INVALID_SESSION_MESSAGE())
         return
       }
       navigate(location.state?.from ?? '/', { replace: true })
@@ -72,8 +73,8 @@ export function RegisterPage() {
       onSubmit={handleSubmit}
       onClearFieldError={clearFieldError}
       switchLink={{
-        text: 'Already have an account?',
-        label: 'Sign in',
+        text: t('auth.register.haveAccount'),
+        label: t('auth.register.signIn'),
         to: LOGIN_PATH,
       }}
     />

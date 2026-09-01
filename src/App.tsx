@@ -1,3 +1,4 @@
+import { FC } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import { RequireAuth } from './auth/RequireAuth'
@@ -9,7 +10,7 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { GithubAuthSuccessPage } from './pages/GithubAuthSuccessPage'
 import { GITHUB_AUTH_SUCCESS_PATH, LOGIN_PATH } from './constants/endpoints'
 
-export default function App() {
+const App: FC = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -28,3 +29,5 @@ export default function App() {
     </AuthProvider>
   )
 }
+
+export default App

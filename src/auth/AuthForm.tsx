@@ -1,7 +1,30 @@
+import { FC, ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { t } from '../i18n'
 
-export function AuthForm({
+interface SwitchLink {
+  text: string
+  label: string
+  to: string
+}
+
+interface AuthFormProps {
+  type: 'login' | 'register'
+  email: string
+  password: string
+  passwordConfirmation: string
+  setEmail: (value: string) => void
+  setPassword: (value: string) => void
+  setPasswordConfirmation: (value: string) => void
+  error: string | null
+  fieldErrors: Record<string, string>
+  submitting: boolean
+  onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void | Promise<void>
+  onClearFieldError: (field: string) => void
+  githubHref?: string
+  switchLink?: SwitchLink
+}
+
+export const AuthForm: FC<AuthFormProps> = ({
   type,
   email,
   password,
@@ -14,20 +37,20 @@ export function AuthForm({
   submitting,
   onSubmit,
   onClearFieldError,
-  githubHref = undefined,
-  switchLink = undefined,
-}) {
+  githubHref,
+  switchLink,
+}) => {
   const isRegister = type === 'register'
 
-  const title = isRegister ? t('auth.register.title') : t('auth.login.title')
-  const subtitle = isRegister ? t('auth.register.subtitle') : t('auth.login.subtitle')
+  const title = isRegister ? 'Create account' : 'Sign in'
+  const subtitle = isRegister ? 'Start working with your documents' : 'Welcome back to DocFlow'
   const submitText = isRegister
     ? submitting
-      ? t('auth.register.submitting')
-      : t('auth.register.submit')
+      ? 'Creating…'
+      : 'Create account'
     : submitting
-      ? t('auth.login.submitting')
-      : t('auth.login.submit')
+      ? 'Signing in…'
+      : 'Sign in'
 
   return (
     <div className="auth-page">
@@ -35,55 +58,55 @@ export function AuthForm({
         <h1>{title}</h1>
         <p className="auth-subtitle">{subtitle}</p>
 
-        {error && <div className="auth-error" role="alert">{error}</div>}
+        {error && (
+          <div className="auth-error" role="alert">
+            {error}
+          </div>
+        )}
 
-        <label htmlFor="email">{t('auth.form.email')}</label>
+        <label htmlFor="email">Email</label>
         <input
           id="email"
           type="email"
           value={email}
-          onChange={(event) => {
+          onChange={(event: ChangeEvent<HTMLInputElement>) => {
             setEmail(event.target.value)
             onClearFieldError('email')
           }}
-          placeholder={t('auth.form.emailPlaceholder')}
+          placeholder="you@example.com"
           autoComplete="email"
           required
         />
-        {fieldErrors.email && (
-          <span className="field-error">{fieldErrors.email}</span>
-        )}
+        {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
 
-        <label htmlFor="password">{t('auth.form.password')}</label>
+        <label htmlFor="password">Password</label>
         <input
           id="password"
           type="password"
           value={password}
-          onChange={(event) => {
+          onChange={(event: ChangeEvent<HTMLInputElement>) => {
             setPassword(event.target.value)
             onClearFieldError('password')
           }}
-          placeholder={isRegister ? t('auth.form.passwordNew') : t('auth.form.passwordPlaceholder')}
+          placeholder={isRegister ? 'At least 8 characters' : '••••••••'}
           autoComplete={isRegister ? 'new-password' : 'current-password'}
           minLength={isRegister ? 8 : undefined}
           required
         />
-        {fieldErrors.password && (
-          <span className="field-error">{fieldErrors.password}</span>
-        )}
+        {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
 
         {isRegister && (
           <>
-            <label htmlFor="passwordConfirmation">{t('auth.form.passwordConfirm')}</label>
+            <label htmlFor="passwordConfirmation">Confirm password</label>
             <input
               id="passwordConfirmation"
               type="password"
               value={passwordConfirmation}
-              onChange={(event) => {
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
                 setPasswordConfirmation(event.target.value)
                 onClearFieldError('passwordConfirmation')
               }}
-              placeholder={t('auth.form.passwordConfirmPlaceholder')}
+              placeholder="Repeat password"
               autoComplete="new-password"
               required
             />
@@ -99,7 +122,7 @@ export function AuthForm({
 
         {!isRegister && githubHref && (
           <a className="github-button" href={githubHref}>
-            {t('auth.login.signInWithGithub')}
+            Sign in with GitHub
           </a>
         )}
 

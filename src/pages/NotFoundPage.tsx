@@ -1,7 +1,8 @@
+import { FC } from 'react'
 import { Link } from 'react-router-dom'
 import { t } from '../i18n'
 
-export function NotFoundPage() {
+export const NotFoundPage: FC = () => {
   return (
     <div className="auth-page">
       <div className="auth-card">
