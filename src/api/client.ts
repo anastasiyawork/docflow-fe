@@ -60,9 +60,14 @@ function isRetryableError(err: unknown): boolean {
   return false
 }
 
+const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'])
+
 async function unwrap<T>(
   promise: (init: RequestInit & { signal: AbortSignal }) => Promise<any>,
+  options?: { method?: string },
 ): Promise<T> {
+  const method = (options?.method ?? 'GET').toUpperCase()
+  const canRetry = IDEMPOTENT_METHODS.has(method)
   let lastError: unknown = new Error('Unknown error')
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
@@ -93,13 +98,16 @@ async function unwrap<T>(
       }
 
       if (!data) {
+        if (response.status >= 500) {
+          throw new ApiRequestError(t('errors.serverUnavailable'), response.status)
+        }
         throw new ApiRequestError(t('errors.noDataReceived'), response.status)
       }
 
       return data
     } catch (err) {
       lastError = err
-      const shouldRetry = attempt < MAX_RETRIES && isRetryableError(err)
+      const shouldRetry = canRetry && attempt < MAX_RETRIES && isRetryableError(err)
       if (!shouldRetry) throw err
     }
   }

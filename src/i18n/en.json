@@ -46,6 +46,7 @@
     "invalidSession": "Received an invalid session. Please try again.",
     "githubAuthFailed": "GitHub authentication failed. Please try again.",
     "requestTimeout": "Request timed out. Please try again.",
+    "serverUnavailable": "Server is unavailable. Please try again later.",
     "noDataReceived": "No data received from server.",
     "passwordsMismatch": "Passwords do not match"
   },

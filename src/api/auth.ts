@@ -11,9 +11,15 @@ interface AuthResponse { token: string; expiresAt?: number }
 
 export const authApi = {
   register: (payload: RegisterRequest) =>
-    unwrap<AuthResponse>((init) => client.POST(REGISTER_ENDPOINT, { ...init, body: payload })),
+    unwrap<AuthResponse>((init) => client.POST(REGISTER_ENDPOINT, { ...init, body: payload }), {
+      method: 'POST',
+    }),
   login: (payload: AuthRequest) =>
-    unwrap<AuthResponse>((init) => client.POST(LOGIN_ENDPOINT, { ...init, body: payload })),
+    unwrap<AuthResponse>((init) => client.POST(LOGIN_ENDPOINT, { ...init, body: payload }), {
+      method: 'POST',
+    }),
   exchangeGithubCode: (code: string) =>
-    unwrap<AuthResponse>((init) => client.POST(GITHUB_EXCHANGE_ENDPOINT, { ...init, body: { code } })),
+    unwrap<AuthResponse>((init) => client.POST(GITHUB_EXCHANGE_ENDPOINT, { ...init, body: { code } }), {
+      method: 'POST',
+    }),
 }

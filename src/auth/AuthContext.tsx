@@ -10,7 +10,6 @@ interface Session {
 interface AuthContextType {
   token: string | null
   isAuthenticated: boolean
-  isLoading: boolean
   login: (response: { token: string }) => boolean
   logout: () => void
 }
@@ -46,12 +45,6 @@ interface AuthProviderProps {
 
 export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(readStoredSession)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    setSession(readStoredSession())
-    setIsLoading(false)
-  }, [])
 
   useEffect(() => {
     if (!session?.expiresAt) return undefined
@@ -91,11 +84,10 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     () => ({
       token: session?.token ?? null,
       isAuthenticated: session !== null,
-      isLoading,
       login,
       logout,
     }),
-    [session, login, logout, isLoading],
+    [session, login, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

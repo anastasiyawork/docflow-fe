@@ -12,14 +12,14 @@ interface AuthFormProps {
   type: 'login' | 'register'
   email: string
   password: string
-  passwordConfirmation: string
+  passwordConfirmation?: string
   setEmail: (value: string) => void
   setPassword: (value: string) => void
-  setPasswordConfirmation: (value: string) => void
+  setPasswordConfirmation?: (value: string) => void
   error: string | null
   fieldErrors: Record<string, string>
   submitting: boolean
-  onSubmit: (event: React.SubmitEvent<HTMLFormElement>) => void | Promise<void>
+  onSubmit: (event: React.SyntheticEvent<HTMLFormElement>) => void | Promise<void>
   onClearFieldError: (field: string) => void
   githubHref?: string
   switchLink?: SwitchLink
@@ -102,9 +102,9 @@ export const AuthForm: FC<AuthFormProps> = ({
             <input
               id="passwordConfirmation"
               type="password"
-              value={passwordConfirmation}
+              value={passwordConfirmation ?? ''}
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                setPasswordConfirmation(event.target.value)
+                setPasswordConfirmation?.(event.target.value)
                 onClearFieldError('passwordConfirmation')
               }}
               placeholder={t('auth.form.passwordConfirmPlaceholder')}

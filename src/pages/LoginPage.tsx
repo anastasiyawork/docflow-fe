@@ -38,10 +38,8 @@ export const LoginPage: FC = () => {
       type="login"
       email={email}
       password={password}
-      passwordConfirmation=""
       setEmail={setEmail}
       setPassword={setPassword}
-      setPasswordConfirmation={() => {}}
       error={error}
       fieldErrors={fieldErrors}
       submitting={submitting}

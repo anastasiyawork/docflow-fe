@@ -1,4 +1,4 @@
-import { FC, useEffect } from 'react'
+import { FC, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { INVALID_SESSION_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
@@ -11,8 +11,12 @@ export const GithubAuthSuccessPage: FC = () => {
   const { login } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const exchangedRef = useRef(false)
 
   useEffect(() => {
+    if (exchangedRef.current) return
+    exchangedRef.current = true
+
     const code = searchParams.get('code')
     if (!code) {
       navigate(LOGIN_PATH, {

@@ -1,16 +1,12 @@
 import { FC } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { LOGIN_PATH } from '../constants/endpoints'
 import { t } from '../i18n'
 
 export const HomePage: FC = () => {
   const { logout } = useAuth()
-  const navigate = useNavigate()
 
   function handleLogout(): void {
     logout()
-    navigate(LOGIN_PATH, { replace: true })
   }
 
   return (
