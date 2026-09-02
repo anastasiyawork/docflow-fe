@@ -2,13 +2,10 @@ import { FC, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { INVALID_SESSION_MESSAGE } from '../constants'
 import { useAuth } from '../auth/AuthContext'
-import { authApi, handleAuthError } from '../api/auth'
+import { authApi, handleApiError } from '../api/auth'
 import { LOGIN_PATH } from '../constants/endpoints'
+import { type LocationState } from '../auth/types'
 import { t } from '../i18n'
-
-interface LocationState {
-  error?: string
-}
 
 export const GithubAuthSuccessPage: FC = () => {
   const { login } = useAuth()
@@ -34,7 +31,7 @@ export const GithubAuthSuccessPage: FC = () => {
         navigate('/', { replace: true })
       })
       .catch((error) => {
-        const { error: authError } = handleAuthError(error)
+        const { error: authError } = handleApiError(error)
         navigate(LOGIN_PATH, {
           replace: true,
           state: { error: authError ?? INVALID_SESSION_MESSAGE() } satisfies LocationState,

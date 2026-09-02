@@ -29,7 +29,7 @@ export interface AuthErrorResult {
   error: string | null
 }
 
-export function handleAuthError(err: unknown): AuthErrorResult {
+export function handleApiError(err: unknown): AuthErrorResult {
   if (err instanceof ApiRequestError) {
     const fieldErrors = normalizeFieldErrors(err.details)
     return {

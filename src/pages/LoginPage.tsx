@@ -1,30 +1,19 @@
-import { FC, SyntheticEvent, useEffect, useState } from 'react'
+import { FC, useEffect, useState, type SyntheticEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { authApi, handleAuthError } from '../api/auth'
 import { GITHUB_AUTH_FAILED_CODE, GITHUB_AUTH_FAILED_MESSAGE, INVALID_SESSION_MESSAGE } from '../constants'
-import { useAuth } from '../auth/AuthContext'
 import { GITHUB_OAUTH_ENDPOINT, LOGIN_PATH, REGISTER_PATH } from '../constants/endpoints'
 import { AuthForm } from '../auth/AuthForm'
+import { useAuthSubmit } from '../auth/useAuthSubmit'
+import { type LocationState } from '../auth/types'
 import { t } from '../i18n'
 
-interface LocationState {
-  error?: string
-  from?: string
-}
-
 export const LoginPage: FC = () => {
-  const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const queryError = new URLSearchParams(location.search).get('error')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(
-    (location.state as LocationState)?.error ??
-      (queryError === GITHUB_AUTH_FAILED_CODE ? GITHUB_AUTH_FAILED_MESSAGE() : null),
-  )
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [submitting, setSubmitting] = useState(false)
+  const { error, fieldErrors, submitting, clearFieldError, handleSubmit } = useAuthSubmit('login')
 
   useEffect(() => {
     if (!queryError) return
@@ -40,34 +29,8 @@ export const LoginPage: FC = () => {
     })
   }, [location.search, location.state, navigate, queryError])
 
-  function clearFieldError(field: string): void {
-    setFieldErrors((prev) => {
-      if (!(field in prev)) return prev
-      const next = { ...prev }
-      delete next[field]
-      return next
-    })
-  }
-
-  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault()
-    setError(null)
-    setFieldErrors({})
-    setSubmitting(true)
-    try {
-      const response = await authApi.login({ email, password })
-      if (!login(response)) {
-        setError(INVALID_SESSION_MESSAGE())
-        return
-      }
-      navigate((location.state as LocationState)?.from ?? '/', { replace: true })
-    } catch (err) {
-      const { error: authError, fieldErrors: authFieldErrors } = handleAuthError(err)
-      setFieldErrors(authFieldErrors)
-      setError(authError)
-    } finally {
-      setSubmitting(false)
-    }
+  async function onSubmit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
+    await handleSubmit(event, { email, password })
   }
 
   return (
@@ -82,7 +45,7 @@ export const LoginPage: FC = () => {
       error={error}
       fieldErrors={fieldErrors}
       submitting={submitting}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
       onClearFieldError={clearFieldError}
       githubHref={GITHUB_OAUTH_ENDPOINT}
       switchLink={{

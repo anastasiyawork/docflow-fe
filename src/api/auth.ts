@@ -2,7 +2,7 @@ import { GITHUB_EXCHANGE_ENDPOINT, LOGIN_ENDPOINT, REGISTER_ENDPOINT } from '../
 import { client, unwrap } from './client'
 
 export { onUnauthorized } from './client'
-export { ApiRequestError, handleAuthError, normalizeFieldErrors } from './errors'
+export { ApiRequestError, handleApiError, normalizeFieldErrors } from './errors'
 export type { ApiErrorBody, AuthErrorResult } from './errors'
 
 interface AuthRequest { email: string; password: string }

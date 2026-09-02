@@ -1,5 +1,6 @@
 import { FC, ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { t } from '../i18n'
 
 interface SwitchLink {
   text: string
@@ -42,15 +43,15 @@ export const AuthForm: FC<AuthFormProps> = ({
 }) => {
   const isRegister = type === 'register'
 
-  const title = isRegister ? 'Create account' : 'Sign in'
-  const subtitle = isRegister ? 'Start working with your documents' : 'Welcome back to DocFlow'
+  const title = isRegister ? t('auth.register.title') : t('auth.login.title')
+  const subtitle = isRegister ? t('auth.register.subtitle') : t('auth.login.subtitle')
   const submitText = isRegister
     ? submitting
-      ? 'Creating…'
-      : 'Create account'
+      ? t('auth.register.submitting')
+      : t('auth.register.submit')
     : submitting
-      ? 'Signing in…'
-      : 'Sign in'
+      ? t('auth.login.submitting')
+      : t('auth.login.submit')
 
   return (
     <div className="auth-page">
@@ -64,7 +65,7 @@ export const AuthForm: FC<AuthFormProps> = ({
           </div>
         )}
 
-        <label htmlFor="email">Email</label>
+        <label htmlFor="email">{t('auth.form.email')}</label>
         <input
           id="email"
           type="email"
@@ -73,13 +74,13 @@ export const AuthForm: FC<AuthFormProps> = ({
             setEmail(event.target.value)
             onClearFieldError('email')
           }}
-          placeholder="you@example.com"
+          placeholder={t('auth.form.emailPlaceholder')}
           autoComplete="email"
           required
         />
         {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
 
-        <label htmlFor="password">Password</label>
+        <label htmlFor="password">{t('auth.form.password')}</label>
         <input
           id="password"
           type="password"
@@ -88,7 +89,7 @@ export const AuthForm: FC<AuthFormProps> = ({
             setPassword(event.target.value)
             onClearFieldError('password')
           }}
-          placeholder={isRegister ? 'At least 8 characters' : '••••••••'}
+          placeholder={isRegister ? t('auth.form.passwordNew') : t('auth.form.passwordPlaceholder')}
           autoComplete={isRegister ? 'new-password' : 'current-password'}
           minLength={isRegister ? 8 : undefined}
           required
@@ -97,7 +98,7 @@ export const AuthForm: FC<AuthFormProps> = ({
 
         {isRegister && (
           <>
-            <label htmlFor="passwordConfirmation">Confirm password</label>
+            <label htmlFor="passwordConfirmation">{t('auth.form.passwordConfirm')}</label>
             <input
               id="passwordConfirmation"
               type="password"
@@ -106,7 +107,7 @@ export const AuthForm: FC<AuthFormProps> = ({
                 setPasswordConfirmation(event.target.value)
                 onClearFieldError('passwordConfirmation')
               }}
-              placeholder="Repeat password"
+              placeholder={t('auth.form.passwordConfirmPlaceholder')}
               autoComplete="new-password"
               required
             />
@@ -122,7 +123,7 @@ export const AuthForm: FC<AuthFormProps> = ({
 
         {!isRegister && githubHref && (
           <a className="github-button" href={githubHref}>
-            Sign in with GitHub
+            {t('auth.login.signInWithGithub')}
           </a>
         )}
 
