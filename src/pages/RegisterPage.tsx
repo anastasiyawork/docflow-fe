@@ -1,4 +1,4 @@
-import { FC, FormEvent, useState } from 'react'
+import { FC, SyntheticEvent, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { authApi, handleAuthError } from '../api/auth'
 import { INVALID_SESSION_MESSAGE } from '../constants'
@@ -31,7 +31,7 @@ export const RegisterPage: FC = () => {
     })
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleSubmit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
     setError(null)
     setFieldErrors({})

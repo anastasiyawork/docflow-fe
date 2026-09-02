@@ -1,5 +1,5 @@
 import { FC } from 'react'
-import { Navigate, Outlet, useLocation, LocationState } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 
 export const RedirectIfAuthenticated: FC = () => {
@@ -11,8 +11,8 @@ export const RedirectIfAuthenticated: FC = () => {
   }
 
   if (isAuthenticated) {
-    const state = location.state as LocationState | undefined
-    return <Navigate to={(state as any)?.from ?? '/'} replace />
+    const from = (location.state as { from?: string } | null)?.from ?? '/'
+    return <Navigate to={from} replace />
   }
 
   return <Outlet />
