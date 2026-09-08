@@ -5,3 +5,7 @@ export const GITHUB_OAUTH_ENDPOINT = '/oauth2/authorization/github' as const
 export const LOGIN_PATH = '/login' as const
 export const REGISTER_PATH = '/register' as const
 export const GITHUB_AUTH_SUCCESS_PATH = '/auth/github/success' as const
+export const DOCUMENTS_PATH = '/documents' as const
+export const DOCUMENTS_ENDPOINT = '/api/documents' as const
+export const DOCUMENT_ENDPOINT = '/api/documents/{id}' as const
+export const DOCUMENT_CONTENT_ENDPOINT = '/api/documents/{id}/content' as const
