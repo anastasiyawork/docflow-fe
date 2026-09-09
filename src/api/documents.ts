@@ -19,11 +19,11 @@ export interface DocumentUploadError {
 }
 
 export const documentsApi = {
-  list: (page: number, size: number) =>
+  list: (page: number) =>
     unwrap<DocumentPage>((init) =>
       client.GET(DOCUMENTS_ENDPOINT, {
         ...init,
-        params: { query: { paginationRequest: { page, size } } },
+        params: { query: { paginationRequest: { page } } },
       } as never) as never),
   upload: (file: File) => {
     const formData = new FormData()
