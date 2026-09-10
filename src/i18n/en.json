@@ -30,7 +30,42 @@
   "home": {
     "title": "DocFlow",
     "signOut": "Sign out",
-    "message": "You are signed in."
+    "message": "You are signed in.",
+    "documents": "My documents"
+  },
+  "documents": {
+    "title": "My documents",
+    "back": "Back",
+    "upload": "Upload files",
+    "dropHere": "Drop files here or click to choose",
+    "uploading": "Uploading…",
+    "empty": "No documents yet",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "size": "Size",
+      "date": "Uploaded",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "download": "Download",
+    "delete": "Delete",
+    "retry": "Retry",
+    "status": {
+      "UPLOADED": "Uploaded",
+      "PROCESSING": "Processing…",
+      "READY": "Ready",
+      "FAILED": "Failed"
+    },
+    "errors": {
+      "notFound": "Document not found",
+      "uploadFailed": "Failed to upload: {{filename}} — {{message}}"
+    }
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "pageInfo": "Page {{page}} of {{totalPages}}"
   },
   "notFound": {
     "title": "404",

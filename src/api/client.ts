@@ -38,7 +38,9 @@ client.use({
 const REQUEST_TIMEOUT_MS = 10_000
 const MAX_RETRIES = 2
 
-function withTimeout<T>(promise: (init: RequestInit & { signal: AbortSignal }) => Promise<T>): Promise<T> {
+type RequestRunner<T> = (init: { signal: AbortSignal }) => Promise<T>
+
+function withTimeout<T>(promise: RequestRunner<T>): Promise<T> {
   const controller = new AbortController()
   const timerId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
   return promise({ signal: controller.signal }).finally(() => clearTimeout(timerId))
@@ -63,7 +65,7 @@ function isRetryableError(err: unknown): boolean {
 const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'])
 
 async function unwrap<T>(
-  promise: (init: RequestInit & { signal: AbortSignal }) => Promise<any>,
+  request: RequestRunner<unknown>,
   options?: { method?: string },
 ): Promise<T> {
   const method = (options?.method ?? 'GET').toUpperCase()
@@ -74,7 +76,7 @@ async function unwrap<T>(
     try {
       let result
       try {
-        result = await withTimeout(promise)
+        result = await withTimeout(request)
       } catch (err) {
         if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
           throw new ApiRequestError(t('errors.requestTimeout'), 408)

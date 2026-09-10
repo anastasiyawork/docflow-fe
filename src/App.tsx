@@ -8,7 +8,8 @@ import { RegisterPage } from './pages/RegisterPage'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { GithubAuthSuccessPage } from './pages/GithubAuthSuccessPage'
-import { GITHUB_AUTH_SUCCESS_PATH, LOGIN_PATH, REGISTER_PATH } from './constants/endpoints'
+import { DocumentsPage } from './pages/DocumentsPage'
+import { GITHUB_AUTH_SUCCESS_PATH, LOGIN_PATH, REGISTER_PATH, DOCUMENTS_PATH } from './constants/endpoints'
 
 const App: FC = () => {
   return (
@@ -22,6 +23,7 @@ const App: FC = () => {
           </Route>
           <Route element={<RequireAuth />}>
             <Route path="/" element={<HomePage />} />
+            <Route path={DOCUMENTS_PATH} element={<DocumentsPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

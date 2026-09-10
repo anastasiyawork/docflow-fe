@@ -23,16 +23,16 @@ export const documentsApi = {
     unwrap<DocumentPage>((init) =>
       client.GET(DOCUMENTS_ENDPOINT, {
         ...init,
-        params: { query: { paginationRequest: { page } } },
-      } as never) as never),
+        params: { query: { page } } as never,
+      })),
   upload: (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
     return unwrap<DocumentDto>((init) =>
       client.POST(DOCUMENTS_ENDPOINT, {
         ...init,
-        body: formData as unknown as { file: string },
-      }) as never, {
+        body: formData as never,
+      }), {
       method: 'POST',
     })
   },

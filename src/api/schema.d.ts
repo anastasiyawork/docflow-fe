@@ -120,6 +120,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Upload form */
+        UploadFileForm: {
+            /**
+             * Format: binary
+             * @description File to upload
+             */
+            file?: string;
+        };
         DocumentResponse: {
             /** Format: uuid */
             id?: string;
@@ -151,12 +159,6 @@ export interface components {
         GithubCodeRequest: {
             code: string;
         };
-        PaginationRequest: {
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            size?: number;
-        };
         PageResponseDocumentResponse: {
             content?: components["schemas"]["DocumentResponse"][];
             /** Format: int32 */
@@ -181,8 +183,9 @@ export type $defs = Record<string, never>;
 export interface operations {
     list: {
         parameters: {
-            query: {
-                paginationRequest: components["schemas"]["PaginationRequest"];
+            query?: {
+                page?: number;
+                size?: number;
             };
             header?: never;
             path?: never;
@@ -208,12 +211,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: {
+        requestBody: {
             content: {
-                "application/json": {
-                    /** Format: binary */
-                    file: string;
-                };
+                "multipart/form-data": components["schemas"]["UploadFileForm"];
             };
         };
         responses: {

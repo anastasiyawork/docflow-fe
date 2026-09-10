@@ -1,6 +1,15 @@
 import messages from './en.json'
 
-function getMessage(path: string): string {
+type InterpolationValues = Record<string, string | number>
+
+function interpolate(template: string, values?: InterpolationValues): string {
+  if (!values) return template
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) =>
+    key in values ? String(values[key]) : match,
+  )
+}
+
+function getMessage(path: string, values?: InterpolationValues): string {
   const keys = path.split('.')
   let value: any = messages
 
@@ -12,7 +21,7 @@ function getMessage(path: string): string {
     }
   }
 
-  return typeof value === 'string' ? value : path
+  return typeof value === 'string' ? interpolate(value, values) : path
 }
 
 export const t = getMessage
