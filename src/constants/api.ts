@@ -1,5 +1,9 @@
 export const REQUEST_TIMEOUT_MS = 10_000
 
+export const UPLOAD_TIMEOUT_MS = 60_000
+
+export const DOWNLOAD_TIMEOUT_MS = 60_000
+
 export const MAX_RETRIES = 2
 
 export const RETRY_BASE_DELAYS_MS = [300, 900]

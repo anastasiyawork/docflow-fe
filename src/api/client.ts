@@ -56,17 +56,44 @@ export class NetworkError extends Error {
 
 type RequestRunner<T> = (init: { signal: AbortSignal }) => Promise<T>
 
-function withTimeout<T>(promise: RequestRunner<T>): Promise<T> {
+async function withTimeout<T>(
+  runner: RequestRunner<T>,
+  options: { timeoutMs?: number; signal?: AbortSignal },
+): Promise<T> {
   const controller = new AbortController()
-  const timerId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
-  return promise({ signal: controller.signal }).finally(() => clearTimeout(timerId))
+  const timerId = setTimeout(
+    () => controller.abort(),
+    options.timeoutMs ?? REQUEST_TIMEOUT_MS,
+  )
+
+  const onExternalAbort = () => controller.abort(options.signal?.reason)
+  if (options.signal) {
+    if (options.signal.aborted) {
+      controller.abort(options.signal.reason)
+    } else {
+      options.signal.addEventListener('abort', onExternalAbort, { once: true })
+    }
+  }
+
+  try {
+    return await runner({ signal: controller.signal })
+  } finally {
+    clearTimeout(timerId)
+    options.signal?.removeEventListener('abort', onExternalAbort)
+  }
 }
 
-async function runWithNormalizedErrors<T>(request: RequestRunner<T>): Promise<T> {
+async function runWithNormalizedErrors<T>(
+  request: RequestRunner<T>,
+  options: { timeoutMs?: number; signal?: AbortSignal },
+): Promise<T> {
   try {
-    return await withTimeout(request)
+    return await withTimeout(request, options)
   } catch (err) {
     if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
+      if (options.signal?.aborted) {
+        throw err
+      }
       throw new ApiRequestError(t('errors.requestTimeout'), 408)
     }
     if (err instanceof TypeError) {
@@ -114,6 +141,8 @@ interface FetchResult<TData, TError> {
 
 export interface UnwrapOptions {
   method: string
+  timeoutMs?: number
+  signal?: AbortSignal
 }
 
 interface RetryContext {
@@ -150,7 +179,7 @@ async function unwrap<TData, TError extends ApiErrorBody = ApiErrorBody>(
   const ctx: RetryContext = { canRetry: false }
 
   return retryLoop(options, ctx, async () => {
-    const result = await runWithNormalizedErrors(request)
+    const result = await runWithNormalizedErrors(request, options)
     const { data, error, response } = result
     ctx.lastResponse = response
 
@@ -181,7 +210,7 @@ async function requestVoid<TError extends ApiErrorBody = ApiErrorBody>(
   const ctx: RetryContext = { canRetry: false }
 
   return retryLoop(options, ctx, async () => {
-    const result = await runWithNormalizedErrors(request)
+    const result = await runWithNormalizedErrors(request, options)
     const { error, response } = result
     ctx.lastResponse = response
 
