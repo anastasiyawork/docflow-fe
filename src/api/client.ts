@@ -1,5 +1,14 @@
 import createClient from 'openapi-fetch'
 import { TOKEN_KEY } from '../constants'
+import {
+  IDEMPOTENT_METHODS,
+  JITTER_FACTOR,
+  MAX_RETRIES,
+  MAX_RETRY_AFTER_MS,
+  REQUEST_TIMEOUT_MS,
+  RETRYABLE_STATUSES,
+  RETRY_BASE_DELAYS_MS,
+} from '../constants/api'
 import { GITHUB_EXCHANGE_ENDPOINT, LOGIN_ENDPOINT, REGISTER_ENDPOINT } from '../constants/endpoints'
 import { t } from '../i18n'
 import type { paths } from './schema'
@@ -35,8 +44,15 @@ client.use({
   },
 })
 
-const REQUEST_TIMEOUT_MS = 10_000
-const MAX_RETRIES = 2
+export class NetworkError extends Error {
+  public readonly cause?: unknown
+
+  constructor(cause?: unknown) {
+    super(t('errors.network'))
+    this.name = 'NetworkError'
+    if (cause !== undefined) this.cause = cause
+  }
+}
 
 type RequestRunner<T> = (init: { signal: AbortSignal }) => Promise<T>
 
@@ -46,118 +62,138 @@ function withTimeout<T>(promise: RequestRunner<T>): Promise<T> {
   return promise({ signal: controller.signal }).finally(() => clearTimeout(timerId))
 }
 
-function isRetryableError(err: unknown): boolean {
-  if (!err) return false
-  if (err instanceof ApiRequestError && err.status === 408) return true
-  if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') return true
-  if (err instanceof TypeError) return true
-  if (typeof err === 'object' && err !== null) {
-    const errObj = err as Record<string, unknown>
-    if (typeof errObj.name === 'string' && (errObj.name === 'AbortError' || errObj.name === 'TypeError')) return true
-    if (typeof errObj.message === 'string') {
-      const message = (errObj.message as string).toLowerCase()
-      return message.includes('failed to fetch') || message.includes('networkerror') || message.includes('load failed')
+async function runWithNormalizedErrors<T>(request: RequestRunner<T>): Promise<T> {
+  try {
+    return await withTimeout(request)
+  } catch (err) {
+    if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiRequestError(t('errors.requestTimeout'), 408)
     }
+    if (err instanceof TypeError) {
+      throw new NetworkError(err)
+    }
+    throw err
   }
+}
+
+function isRetryableError(err: unknown): boolean {
+  if (err instanceof NetworkError) return true
+  if (err instanceof ApiRequestError && RETRYABLE_STATUSES.has(err.status)) return true
   return false
 }
 
-const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'])
+function getRetryAfterMs(response: Response): number | null {
+  const header = response.headers.get('retry-after')
+  if (!header) return null
+  const seconds = Number(header)
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.min(seconds * 1_000, MAX_RETRY_AFTER_MS)
+  }
+  const date = Date.parse(header)
+  if (!Number.isNaN(date)) {
+    return Math.min(Math.max(date - Date.now(), 0), MAX_RETRY_AFTER_MS)
+  }
+  return null
+}
+
+function getRetryDelayMs(attempt: number, response?: Response): number {
+  if (response) {
+    const retryAfterMs = getRetryAfterMs(response)
+    if (retryAfterMs !== null) return retryAfterMs
+  }
+  const base = RETRY_BASE_DELAYS_MS[Math.min(attempt, RETRY_BASE_DELAYS_MS.length - 1)]
+  const jitter = 1 + (Math.random() * 2 - 1) * JITTER_FACTOR
+  return Math.round(base * jitter)
+}
+
 interface FetchResult<TData, TError> {
   data?: TData
   error?: TError
   response: Response
 }
 
-async function unwrap<TData, TError = ApiErrorBody>(
-  request: RequestRunner<FetchResult<TData, TError>>,
-  options?: { method?: string },
-): Promise<TData> {
-  const method = (options?.method ?? 'GET').toUpperCase()
-  const canRetry = IDEMPOTENT_METHODS.has(method)
+export interface UnwrapOptions {
+  method: string
+}
+
+interface RetryContext {
+  canRetry: boolean
+  lastResponse?: Response
+}
+
+async function retryLoop<T>(
+  options: UnwrapOptions,
+  ctx: RetryContext,
+  runAttempt: () => Promise<T>,
+): Promise<T> {
+  ctx.canRetry = IDEMPOTENT_METHODS.has(options.method.toUpperCase())
   let lastError: unknown = new Error('Unknown error')
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
     try {
-      let result
-      try {
-        result = await withTimeout(request)
-      } catch (err) {
-        if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
-          throw new ApiRequestError(t('errors.requestTimeout'), 408)
-        }
-        throw err
-      }
-
-      const { data, error, response } = result
-
-      if (!response.ok) {
-        const apiError = error
-        throw new ApiRequestError(
-          apiError?.message ?? t('errors.generic'),
-          response.status,
-          apiError?.details ?? {},
-        )
-      }
-
-      if (data === undefined) {
-        if (response.status >= 500) {
-          throw new ApiRequestError(t('errors.serverUnavailable'), response.status)
-        }
-        throw new ApiRequestError(t('errors.noDataReceived'), response.status)
-      }
-
-      return data
+      return await runAttempt()
     } catch (err) {
       lastError = err
-      const shouldRetry = canRetry && attempt < MAX_RETRIES && isRetryableError(err)
+      const shouldRetry = ctx.canRetry && attempt < MAX_RETRIES && isRetryableError(err)
       if (!shouldRetry) throw err
+      await new Promise((resolve) => setTimeout(resolve, getRetryDelayMs(attempt, ctx.lastResponse)))
     }
   }
 
   throw lastError
 }
 
-async function requestVoid<TError = ApiErrorBody>(
-  request: RequestRunner<FetchResult<unknown, TError>>,
-  options?: { method?: string },
-): Promise<void> {
-  const method = (options?.method ?? 'GET').toUpperCase()
-  const canRetry = IDEMPOTENT_METHODS.has(method)
-  let lastError: unknown = new Error('Unknown error')
+async function unwrap<TData, TError extends ApiErrorBody = ApiErrorBody>(
+  request: RequestRunner<FetchResult<TData, TError>>,
+  options: UnwrapOptions,
+): Promise<TData> {
+  const ctx: RetryContext = { canRetry: false }
 
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
-    try {
-      let result
-      try {
-        result = await withTimeout(request)
-      } catch (err) {
-        if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
-          throw new ApiRequestError(t('errors.requestTimeout'), 408)
-        }
-        throw err
-      }
+  return retryLoop(options, ctx, async () => {
+    const result = await runWithNormalizedErrors(request)
+    const { data, error, response } = result
+    ctx.lastResponse = response
 
-      const { error, response } = result
-
-      if (!response.ok) {
-        const apiError = error
-        throw new ApiRequestError(
-          apiError?.message ?? t('errors.generic'),
-          response.status,
-          apiError?.details ?? {},
-        )
-      }
-
-      return
-    } catch (err) {
-      lastError = err
-      const shouldRetry = canRetry && attempt < MAX_RETRIES && isRetryableError(err)
-      if (!shouldRetry) throw err
+    if (!response.ok) {
+      const apiError = error
+      throw new ApiRequestError(
+        apiError?.message ?? t('errors.generic'),
+        response.status,
+        apiError?.details ?? {},
+      )
     }
-  }
 
-  throw lastError
+    if (data === undefined) {
+      if (response.status >= 500) {
+        throw new ApiRequestError(t('errors.serverUnavailable'), response.status)
+      }
+      throw new ApiRequestError(t('errors.noDataReceived'), response.status)
+    }
+
+    return data
+  })
+}
+
+async function requestVoid<TError extends ApiErrorBody = ApiErrorBody>(
+  request: RequestRunner<FetchResult<unknown, TError>>,
+  options: UnwrapOptions,
+): Promise<void> {
+  const ctx: RetryContext = { canRetry: false }
+
+  return retryLoop(options, ctx, async () => {
+    const result = await runWithNormalizedErrors(request)
+    const { error, response } = result
+    ctx.lastResponse = response
+
+    if (!response.ok) {
+      const apiError = error
+      throw new ApiRequestError(
+        apiError?.message ?? t('errors.generic'),
+        response.status,
+        apiError?.details ?? {},
+      )
+    }
+  })
 }
 
 export { client, unwrap, requestVoid }

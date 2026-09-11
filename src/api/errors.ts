@@ -1,5 +1,6 @@
 import { GENERIC_ERROR_MESSAGE, NETWORK_ERROR_MESSAGE } from '../constants'
 import { t } from '../i18n'
+import { NetworkError } from './client'
 
 export interface ApiErrorBody {
   message?: string
@@ -38,7 +39,7 @@ export function handleApiError(err: unknown): AuthErrorResult {
     }
   }
 
-  if (err instanceof TypeError) {
+  if (err instanceof NetworkError || err instanceof TypeError) {
     return {
       fieldErrors: {},
       error: typeof NETWORK_ERROR_MESSAGE === 'function' ? NETWORK_ERROR_MESSAGE() : NETWORK_ERROR_MESSAGE,

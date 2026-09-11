@@ -21,7 +21,9 @@ export const documentsApi = {
       client.GET(DOCUMENTS_ENDPOINT, {
         ...init,
         params: { query: { page } },
-      }))
+      }), {
+      method: 'GET',
+    })
   },
   upload: async (file: File): Promise<DocumentDto> => {
     const formData = new FormData()
