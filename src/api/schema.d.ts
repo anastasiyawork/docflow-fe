@@ -129,48 +129,91 @@ export interface components {
             file?: string;
         };
         DocumentResponse: {
-            /** Format: uuid */
-            id?: string;
-            filename?: string;
-            /** @enum {string} */
-            contentType?: "PDF" | "DOCX" | "TXT" | "MARKDOWN";
-            /** Format: int64 */
-            sizeBytes?: number;
-            /** @enum {string} */
-            status?: "UPLOADED" | "PROCESSING" | "READY" | "FAILED";
-            /** Format: date-time */
-            createdAt?: string;
+            /**
+             * Format: uuid
+             * @description Document identifier
+             */
+            id: string;
+            /** @description Original filename */
+            filename: string;
+            /**
+             * @description Document content type
+             * @enum {string}
+             */
+            contentType: "PDF" | "DOCX" | "TXT" | "MARKDOWN";
+            /**
+             * Format: int64
+             * @description File size in bytes
+             */
+            sizeBytes: number;
+            /**
+             * @description Processing status
+             * @enum {string}
+             */
+            status: "UPLOADED" | "PROCESSING" | "READY" | "FAILED";
+            /**
+             * Format: date-time
+             * @description Creation timestamp
+             */
+            createdAt: string;
         };
         RegisterRequest: {
-            /** Format: email */
+            /**
+             * Format: email
+             * @description User email
+             */
             email: string;
+            /** @description Password (min 8 characters) */
             password: string;
+            /** @description Password confirmation */
             passwordConfirmation: string;
             passwordsMatching?: boolean;
         };
         AuthResponse: {
-            token?: string;
+            /** @description JWT access token */
+            token: string;
         };
         LoginRequest: {
-            /** Format: email */
+            /**
+             * Format: email
+             * @description User email
+             */
             email: string;
+            /** @description User password */
             password: string;
         };
+        /** @description GitHub OAuth code exchange request */
         GithubCodeRequest: {
+            /** @description Authorization code from GitHub */
             code: string;
         };
         PageResponseDocumentResponse: {
-            content?: components["schemas"]["DocumentResponse"][];
-            /** Format: int32 */
-            page?: number;
-            /** Format: int32 */
-            size?: number;
-            /** Format: int64 */
-            totalElements?: number;
-            /** Format: int32 */
-            totalPages?: number;
-            first?: boolean;
-            last?: boolean;
+            /** @description Page items */
+            content: components["schemas"]["DocumentResponse"][];
+            /**
+             * Format: int32
+             * @description Current page number (0-based)
+             */
+            page: number;
+            /**
+             * Format: int32
+             * @description Page size
+             */
+            size: number;
+            /**
+             * Format: int64
+             * @description Total number of elements
+             */
+            totalElements: number;
+            /**
+             * Format: int32
+             * @description Total number of pages
+             */
+            totalPages: number;
+            /** @description Whether this is the first page */
+            first: boolean;
+            /** @description Whether this is the last page */
+            last: boolean;
         };
     };
     responses: never;

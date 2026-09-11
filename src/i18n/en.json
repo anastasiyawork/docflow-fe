@@ -49,6 +49,7 @@
       "actions": "Actions"
     },
     "download": "Download",
+    "downloading": "Downloading…",
     "delete": "Delete",
     "retry": "Retry",
     "status": {

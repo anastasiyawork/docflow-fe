@@ -63,11 +63,16 @@ function isRetryableError(err: unknown): boolean {
 }
 
 const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'])
+interface FetchResult<TData, TError> {
+  data?: TData
+  error?: TError
+  response: Response
+}
 
-async function unwrap<T>(
-  request: RequestRunner<unknown>,
+async function unwrap<TData, TError = ApiErrorBody>(
+  request: RequestRunner<FetchResult<TData, TError>>,
   options?: { method?: string },
-): Promise<T> {
+): Promise<TData> {
   const method = (options?.method ?? 'GET').toUpperCase()
   const canRetry = IDEMPOTENT_METHODS.has(method)
   let lastError: unknown = new Error('Unknown error')
@@ -84,13 +89,9 @@ async function unwrap<T>(
         throw err
       }
 
-      const { data, error, response } = result as {
-        data?: T
-        error?: ApiErrorBody
-        response: Response
-      }
+      const { data, error, response } = result
 
-      if (error) {
+      if (!response.ok) {
         const apiError = error
         throw new ApiRequestError(
           apiError?.message ?? t('errors.generic'),
@@ -99,7 +100,7 @@ async function unwrap<T>(
         )
       }
 
-      if (!data) {
+      if (data === undefined) {
         if (response.status >= 500) {
           throw new ApiRequestError(t('errors.serverUnavailable'), response.status)
         }
@@ -117,4 +118,46 @@ async function unwrap<T>(
   throw lastError
 }
 
-export { client, unwrap }
+async function requestVoid<TError = ApiErrorBody>(
+  request: RequestRunner<FetchResult<unknown, TError>>,
+  options?: { method?: string },
+): Promise<void> {
+  const method = (options?.method ?? 'GET').toUpperCase()
+  const canRetry = IDEMPOTENT_METHODS.has(method)
+  let lastError: unknown = new Error('Unknown error')
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    try {
+      let result
+      try {
+        result = await withTimeout(request)
+      } catch (err) {
+        if (typeof DOMException !== 'undefined' && err instanceof DOMException && err.name === 'AbortError') {
+          throw new ApiRequestError(t('errors.requestTimeout'), 408)
+        }
+        throw err
+      }
+
+      const { error, response } = result
+
+      if (!response.ok) {
+        const apiError = error
+        throw new ApiRequestError(
+          apiError?.message ?? t('errors.generic'),
+          response.status,
+          apiError?.details ?? {},
+        )
+      }
+
+      return
+    } catch (err) {
+      lastError = err
+      const shouldRetry = canRetry && attempt < MAX_RETRIES && isRetryableError(err)
+      if (!shouldRetry) throw err
+    }
+  }
+
+  throw lastError
+}
+
+export { client, unwrap, requestVoid }

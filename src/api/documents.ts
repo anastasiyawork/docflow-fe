@@ -4,14 +4,11 @@ import { ApiRequestError } from './errors'
 import { t } from '../i18n'
 import type { components } from './schema'
 
-type DocumentResponse = components['schemas']['DocumentResponse']
-type PageResponse = components['schemas']['PageResponseDocumentResponse']
+export type DocumentDto = components['schemas']['DocumentResponse']
+export type DocumentPage = components['schemas']['PageResponseDocumentResponse']
 
-export type DocumentDto = Required<DocumentResponse>
-export type DocumentPage = Omit<Required<PageResponse>, 'content'> & { content: DocumentDto[] }
-
-export type DocumentContentType = NonNullable<DocumentResponse['contentType']>
-export type DocumentStatus = NonNullable<DocumentResponse['status']>
+export type DocumentContentType = NonNullable<DocumentDto['contentType']>
+export type DocumentStatus = NonNullable<DocumentDto['status']>
 
 export interface DocumentUploadError {
   filename: string
@@ -19,16 +16,17 @@ export interface DocumentUploadError {
 }
 
 export const documentsApi = {
-  list: (page: number) =>
-    unwrap<DocumentPage>((init) =>
+  list: async (page: number): Promise<DocumentPage> => {
+    return unwrap((init) =>
       client.GET(DOCUMENTS_ENDPOINT, {
         ...init,
-        params: { query: { page } } as never,
-      })),
-  upload: (file: File) => {
+        params: { query: { page } },
+      }))
+  },
+  upload: async (file: File): Promise<DocumentDto> => {
     const formData = new FormData()
     formData.append('file', file)
-    return unwrap<DocumentDto>((init) =>
+    return unwrap((init) =>
       client.POST(DOCUMENTS_ENDPOINT, {
         ...init,
         body: formData as never,

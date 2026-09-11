@@ -2,6 +2,7 @@ import { FC, DragEvent, MouseEvent, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useDocuments } from '../documents/useDocuments'
 import { downloadDocument } from '../api/documents'
+import { ApiRequestError } from '../api/errors'
 import { formatBytes, formatDateTime, statusLabel } from '../documents/format'
 import { Pagination } from '../components/Pagination'
 import { t } from '../i18n'
@@ -25,6 +26,8 @@ export const DocumentsPage: FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [downloadingIds, setDownloadingIds] = useState<ReadonlySet<string>>(new Set())
+  const [downloadError, setDownloadError] = useState<string | null>(null)
 
   function handleFilesChosen(files: FileList | null): void {
     if (files && files.length > 0) void upload(files)
@@ -50,8 +53,23 @@ export const DocumentsPage: FC = () => {
     setIsDragging(false)
   }
 
-  function handleDownload(id: string, filename: string): void {
-    void downloadDocument(id, filename)
+  async function handleDownload(id: string, filename: string): Promise<void> {
+    if (downloadingIds.has(id)) return
+    setDownloadError(null)
+    setDownloadingIds((prev) => new Set(prev).add(id))
+    try {
+      await downloadDocument(id, filename)
+    } catch (error) {
+      setDownloadError(
+        error instanceof ApiRequestError ? error.message : t('errors.generic'),
+      )
+    } finally {
+      setDownloadingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
   }
 
   function handleDelete(event: MouseEvent<HTMLButtonElement>, id: string): void {
@@ -96,6 +114,12 @@ export const DocumentsPage: FC = () => {
         </ul>
       )}
 
+      {downloadError && (
+        <div className="documents-load-error" role="alert">
+          <span>{downloadError}</span>
+        </div>
+      )}
+
       {loadError && (
         <div className="documents-load-error" role="alert">
           <span>{loadError}</span>
@@ -127,6 +151,7 @@ export const DocumentsPage: FC = () => {
             <tbody>
               {documents.map((doc) => {
                 const isDeleting = deletingIds.has(doc.id)
+                const isDownloading = downloadingIds.has(doc.id)
                 return (
                   <tr key={doc.id} className={isDeleting ? 'documents-row--deleting' : undefined}>
                     <td>{doc.filename}</td>
@@ -141,10 +166,10 @@ export const DocumentsPage: FC = () => {
                     <td>
                       <button
                         type="button"
-                        onClick={() => handleDownload(doc.id, doc.filename)}
-                        disabled={isDeleting}
+                        onClick={() => void handleDownload(doc.id, doc.filename)}
+                        disabled={isDeleting || isDownloading}
                       >
-                        {t('documents.download')}
+                        {isDownloading ? t('documents.downloading') : t('documents.download')}
                       </button>
                       <button
                         type="button"
