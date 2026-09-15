@@ -18,19 +18,23 @@ export const DocumentsPage: FC = () => {
     deletingIds,
     loadError,
     uploadErrors,
+    deleteError,
     setPage,
     upload,
     remove,
     refresh,
+    dismissDeleteError,
   } = useDocuments()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const dragDepthRef = useRef(0)
   const [downloadingIds, setDownloadingIds] = useState<ReadonlySet<string>>(new Set())
   const [downloadError, setDownloadError] = useState<string | null>(null)
 
   function handleFilesChosen(files: FileList | null): void {
-    if (files && files.length > 0) void upload(files)
+    if (isUploading || !files?.length) return
+    void upload(Array.from(files))
   }
 
   function handleFileInputChange(): void {
@@ -40,17 +44,25 @@ export const DocumentsPage: FC = () => {
 
   function handleDrop(event: DragEvent<HTMLDivElement>): void {
     event.preventDefault()
+    dragDepthRef.current = 0
     setIsDragging(false)
-    handleFilesChosen(event.dataTransfer.files)
+    handleFilesChosen(event.dataTransfer?.files ?? null)
+  }
+
+  function handleDragEnter(event: DragEvent<HTMLDivElement>): void {
+    event.preventDefault()
+    dragDepthRef.current += 1
+    setIsDragging(true)
   }
 
   function handleDragOver(event: DragEvent<HTMLDivElement>): void {
     event.preventDefault()
-    setIsDragging(true)
   }
 
-  function handleDragLeave(): void {
-    setIsDragging(false)
+  function handleDragLeave(event: DragEvent<HTMLDivElement>): void {
+    event.preventDefault()
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1)
+    if (dragDepthRef.current === 0) setIsDragging(false)
   }
 
   async function handleDownload(id: string, filename: string): Promise<void> {
@@ -74,7 +86,9 @@ export const DocumentsPage: FC = () => {
 
   function handleDelete(event: MouseEvent<HTMLButtonElement>, id: string): void {
     event.preventDefault()
-    void remove(id)
+    if (window.confirm(t('documents.confirmDelete'))) {
+      void remove(id)
+    }
   }
 
   return (
@@ -89,6 +103,7 @@ export const DocumentsPage: FC = () => {
       <div
         className={`documents-dropzone${isDragging ? ' documents-dropzone--dragging' : ''}`}
         onDrop={handleDrop}
+        onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
       >
@@ -108,8 +123,10 @@ export const DocumentsPage: FC = () => {
 
       {uploadErrors.length > 0 && (
         <ul className="documents-upload-errors" role="alert">
-          {uploadErrors.map(({ filename, message }) => (
-            <li key={filename}>{t('documents.errors.uploadFailed', { filename, message })}</li>
+          {uploadErrors.map(({ filename, message }, index) => (
+            <li key={`${filename}-${index}`}>
+              {t('documents.errors.uploadFailed', { filename, message })}
+            </li>
           ))}
         </ul>
       )}
@@ -117,6 +134,15 @@ export const DocumentsPage: FC = () => {
       {downloadError && (
         <div className="documents-load-error" role="alert">
           <span>{downloadError}</span>
+        </div>
+      )}
+
+      {deleteError && (
+        <div className="documents-load-error" role="alert">
+          <span>{deleteError}</span>
+          <button type="button" onClick={dismissDeleteError}>
+            {t('documents.cancel')}
+          </button>
         </div>
       )}
 
@@ -131,7 +157,7 @@ export const DocumentsPage: FC = () => {
 
       {isLoading ? (
         <div className="documents-loading" aria-live="polite">
-          {t('documents.uploading')}
+          {t('documents.loadingList')}
         </div>
       ) : documents.length === 0 && !loadError ? (
         <p className="documents-empty">{t('documents.empty')}</p>
@@ -168,6 +194,7 @@ export const DocumentsPage: FC = () => {
                         type="button"
                         onClick={() => void handleDownload(doc.id, doc.filename)}
                         disabled={isDeleting || isDownloading}
+                        aria-label={t('documents.downloadFile', { filename: doc.filename })}
                       >
                         {isDownloading ? t('documents.downloading') : t('documents.download')}
                       </button>
@@ -175,6 +202,7 @@ export const DocumentsPage: FC = () => {
                         type="button"
                         onClick={(event) => handleDelete(event, doc.id)}
                         disabled={isDeleting}
+                        aria-label={t('documents.deleteFile', { filename: doc.filename })}
                       >
                         {t('documents.delete')}
                       </button>

@@ -1,7 +1,7 @@
 import { GITHUB_EXCHANGE_ENDPOINT, LOGIN_ENDPOINT, REGISTER_ENDPOINT } from '../constants/endpoints'
 import { client, unwrap } from './client'
 
-export { onUnauthorized } from './client'
+export { onUnauthorized, resetSessionEndNotification } from './client'
 export { ApiRequestError, handleApiError, normalizeFieldErrors } from './errors'
 export type { ApiErrorBody, AuthErrorResult } from './errors'
 

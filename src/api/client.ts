@@ -25,6 +25,24 @@ export function onUnauthorized(listener: UnauthorizedListener): () => void {
   }
 }
 
+let sessionEndNotified = false
+
+export function notifySessionEnded(): void {
+  if (sessionEndNotified) return
+  sessionEndNotified = true
+  for (const listener of [...onUnauthorizedListeners]) {
+    try {
+      listener()
+    } catch (err) {
+      console.error('onUnauthorized listener failed', err)
+    }
+  }
+}
+
+export function resetSessionEndNotification(): void {
+  sessionEndNotified = false
+}
+
 const client = createClient<paths>({ baseUrl: '' })
 
 client.use({
@@ -37,8 +55,13 @@ client.use({
     const pathname = new URL(request.url).pathname
     const isAuthEndpoint =
       pathname === LOGIN_ENDPOINT || pathname === REGISTER_ENDPOINT || pathname === GITHUB_EXCHANGE_ENDPOINT
-    if (response.status === 401 && !isAuthEndpoint && localStorage.getItem(TOKEN_KEY)) {
-      onUnauthorizedListeners.forEach((listener) => listener())
+    if (response.status === 401 && !isAuthEndpoint) {
+      const currentToken = localStorage.getItem(TOKEN_KEY)
+      const usesCurrentToken =
+        currentToken !== null && request.headers.get('Authorization') === `Bearer ${currentToken}`
+      if (usesCurrentToken) {
+        notifySessionEnded()
+      }
     }
     return response
   },

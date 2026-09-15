@@ -201,7 +201,21 @@ body {
 }
 
 .documents-file-input {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.documents-file-input:focus-visible + .documents-dropzone-label {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .documents-dropzone-label {
@@ -209,6 +223,16 @@ body {
   color: #6b7280;
   font-size: 14px;
   cursor: pointer;
+}
+
+.documents-delete-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--error-text);
 }
 
 .documents-upload-errors {

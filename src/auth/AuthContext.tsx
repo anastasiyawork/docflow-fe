@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, ReactNode, FC } from 'react'
-import { onUnauthorized } from '../api/auth'
+import { onUnauthorized, resetSessionEndNotification } from '../api/auth'
 import { TOKEN_KEY } from '../constants'
 
 interface Session {
@@ -60,6 +60,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
       return false
     }
     localStorage.setItem(TOKEN_KEY, response.token)
+    resetSessionEndNotification()
     setSession({ token: response.token, expiresAt })
     return true
   }, [])

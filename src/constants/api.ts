@@ -15,3 +15,7 @@ export const RETRYABLE_STATUSES = new Set([408, 429, 502, 503, 504])
 
 
 export const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'])
+
+export const MAX_PARALLEL_UPLOADS = 3
+
+export const STATUS_POLL_INTERVAL_MS = 5_000

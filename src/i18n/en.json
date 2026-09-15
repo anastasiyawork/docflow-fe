@@ -39,6 +39,11 @@
     "upload": "Upload files",
     "dropHere": "Drop files here or click to choose",
     "uploading": "Uploading…",
+    "loadingList": "Loading documents…",
+    "downloadFile": "Download {{filename}}",
+    "deleteFile": "Delete {{filename}}",
+    "confirmDelete": "Are you sure you want to delete this document? This action cannot be undone.",
+    "cancel": "Cancel",
     "empty": "No documents yet",
     "columns": {
       "name": "Name",
