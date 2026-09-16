@@ -169,7 +169,6 @@ export function useDocuments(): UseDocumentsResult {
         return { ...prev, deletingIds: next, deleteError: null }
       })
 
-      const isLastOnPage = state.documents.length === 1 && state.page > 0
       try {
         await documentsApi.remove(id)
         if (!mountedRef.current) return
@@ -181,7 +180,11 @@ export function useDocuments(): UseDocumentsResult {
           next.delete(id)
           return { ...prev, deletingIds: next }
         })
-        void load(isLastOnPage ? state.page - 1 : state.page)
+        setState((prev) => {
+          const isLastOnPage = prev.documents.length === 1 && prev.page > 0
+          void load(isLastOnPage ? prev.page - 1 : prev.page)
+          return prev
+        })
       } catch (err) {
         const nextIds = new Set(deletingIdsRef.current)
         nextIds.delete(id)
@@ -198,7 +201,7 @@ export function useDocuments(): UseDocumentsResult {
         })
       }
     },
-    [load, state.documents.length, state.page],
+    [load],
   )
 
   const dismissDeleteError = useCallback(() => {

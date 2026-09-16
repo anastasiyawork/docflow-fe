@@ -47,7 +47,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(readStoredSession)
 
   useEffect(() => {
-    if (!session?.expiresAt) return undefined
+    if (session === null) return undefined
     const delay = Math.max(session.expiresAt - Date.now(), 0) + 1000
     const timerId = setTimeout(() => setSession(readStoredSession()), delay)
     return () => clearTimeout(timerId)
@@ -75,7 +75,9 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const handleStorage = (event: StorageEvent): void => {
       if (event.key !== null && event.key !== TOKEN_KEY) return
-      setSession(readStoredSession())
+      const restored = readStoredSession()
+      if (restored) resetSessionEndNotification()
+      setSession(restored)
     }
     window.addEventListener('storage', handleStorage)
     return () => window.removeEventListener('storage', handleStorage)
